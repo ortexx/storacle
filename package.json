@@ -1,0 +1,60 @@
+{
+  "name": "storacle",
+  "version": "0.0.1",
+  "description": "Distributed file storage",
+  "main": "./src/index.js",
+  "bin": {
+    "storacle": "./bin/index.js"
+  },
+  "author": {
+    "name": "Alexandr Balasyan",
+    "email": "mywebstreet@gmail.com"
+  },
+  "homepage": "https://github.com/ortexx/storacle",
+  "scripts": {
+    "eslint": "eslint src bin",
+    "test": "mocha ./test/index.js"
+  },
+  "keywords": [
+    "storacle",
+    "file",
+    "files",
+    "storage",
+    "network",
+    "distributed",
+    "distribution",
+    "information",
+    "data"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "get-port": "^4.0.0",
+    "mocha": "^5.2.0"
+  },
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "diskusage": "^0.2.6",
+    "eslint": "^5.9.0",
+    "express": "^4.16.4",
+    "express-form-data": "^2.0.7",
+    "fs-extra": "^7.0.1",
+    "hasha": "^3.0.0",
+    "lodash": "^4.17.11",
+    "mime": "^2.4.0",
+    "mmmagic": "^0.5.2",
+    "optimist": "^0.6.1",
+    "pretty-bytes": "^5.1.0",
+    "request": "^2.88.0",
+    "sequelize": "^4.42.0",
+    "splaytree": "^2.0.3",
+    "spreadable": "^0.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ortexx/storacle"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}
