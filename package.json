@@ -48,7 +48,7 @@
     "request": "^2.88.0",
     "sequelize": "^4.42.0",
     "splaytree": "^2.0.3",
-    "spreadable": "0.0.4"
+    "spreadable": "^0.0.4"
   },
   "repository": {
     "type": "git",
