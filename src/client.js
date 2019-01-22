@@ -163,7 +163,7 @@ module.exports = (Parent) => {
       }
 
       const info = await utils.getFileInfo(file);
-
+      
       return (await this.request('store-file', {
         formData: {
           file: {

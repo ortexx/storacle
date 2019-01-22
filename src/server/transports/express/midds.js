@@ -18,7 +18,7 @@ module.exports.file = node => {
         }
 
         const file = await node.createFileStream(hash);
-        const info = await utils.getFileInfo(file);      
+        const info = await utils.getFileInfo(file, { hash: false });
         info.mime && res.setHeader("Content-Type", info.mime);
         res.setHeader("Content-Length", info.size);
         res.sendFile(file.path);

@@ -2,6 +2,7 @@
 
 const controllers = require('./controllers');
 const midds = require('../../midds');
+const utils = require('../../../../../utils');
 
 module.exports = [
   /**
@@ -46,7 +47,7 @@ module.exports = [
     fn: node => ([
       (req, res, next) => {
         const disableControl = req.headers['disable-files-concurrency-control'];
-        disableControl && req.clientIp == node.ip? next(): midds.requestQueueFiles(node)(req, res, next);
+        disableControl && !utils.isIpEqual(req.clientIp, node.ip)? next(): midds.requestQueueFiles(node)(req, res, next);
       }, 
       midds.requestQueueFileHash(node),
       midds.filesFormData(node),

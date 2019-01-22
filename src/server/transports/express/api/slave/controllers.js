@@ -64,7 +64,7 @@ module.exports.storeFile = node => {
       const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
       
       if(file && !(file instanceof fs.ReadStream)) {        
-        if(req.clientIp != node.ip) {
+        if(!utils.isIpEqual(req.clientIp, node.ip)) {
           throw invalidFileErr;
         }
 
@@ -80,7 +80,7 @@ module.exports.storeFile = node => {
         throw invalidFileErr;
       }
 
-      const info = await utils.getFileInfo(file);     
+      const info = await utils.getFileInfo(file); 
       await node.fileInfoFilter(info);
 
       if(await node.checkFile(info.hash)) {

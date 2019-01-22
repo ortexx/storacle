@@ -9,14 +9,13 @@ const SplayTree = require('splaytree');
 const utils = require('./utils');
 const errors = require('./errors');
 const Node = require('spreadable/src/node')();
-const pack = require('../package');
 
 module.exports = (Parent) => {
   /**
    * Class to manage the storacle node
    */
   return class NodeStoracle extends (Parent || Node) {
-    static get version () { return 'storacle' + pack.version.split('.')[0] }
+    static get name () { return 'storacle' }
     static get DatabaseTransport () { return DatabaseSequelize }
     static get ServerTransport () { return ServerExpress }
     static get CacheTransport () { return CacheDatabase }
@@ -30,7 +29,7 @@ module.exports = (Parent) => {
           fileConcurrency: 30,    
           fileGetTimeout: '2s',
           fileStoreTimeout: '1h',
-          cacheTimeout: 150
+          cacheTimeout: 250
         },
         storage: {        
           autoCleanSize: 0,
@@ -224,8 +223,8 @@ module.exports = (Parent) => {
         file = fs.createReadStream(file);
       }
 
-      info = await utils.getFileInfo(file);    
-      
+      info = await utils.getFileInfo(file);
+
       if(!info.size || !info.hash) {
         throw new errors.WorkError('This file cannot be added to the network', 'ERR_STORACLE_INVALID_FILE');
       }
@@ -712,7 +711,7 @@ module.exports = (Parent) => {
     async createFileLink(hash) {
       this.initializationFilter();    
       const file = this.createFileStream(hash);
-      const info = await utils.getFileInfo(file);
+      const info = await utils.getFileInfo(file, { hash: false });
       return `${this.options.server.https? 'https': 'http'}://${this.address}/file/${hash}${info.ext? '.' + info.ext: ''}`;
     }  
   
@@ -1026,7 +1025,6 @@ module.exports = (Parent) => {
     /**
      * Check file info is available for this node
      * 
-     * @async
      * @param {string} hash
      * @returns {boolean}
      */

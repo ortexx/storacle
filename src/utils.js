@@ -30,36 +30,66 @@ utils.getDiskInfo = async function (dir) {
 };
 
 /**
- * Get disk usage information
+ * Get the file info
  * 
  * @async
  * @param {string|Buffer|fs.ReadStream} file
+ * @param {object} data
  * @returns {object}
  */
-utils.getFileInfo = async function (file) {
+utils.getFileInfo = async function (file, data = {}) {
   if(typeof file == 'string') {
     file = fs.createReadStream(file);      
   }
 
+  data = Object.assign({
+    size: true,
+    mime: true,
+    ext: true,
+    hash: true
+  }, data);
+
   let info = {};
 
   if(file instanceof fs.ReadStream) {
-    info.size = (await fs.stat(file.path)).size;
-    info.mime = await this.getFileMimeType(file.path);      
-    info.ext = mime.getExtension(info.mime);
-    info.hash = await hasha.fromFile(file.path, { algorithm: 'md5' });
+    data.size && (info.size = (await fs.stat(file.path)).size);
+    data.mime && (info.mime = await this.getFileMimeType(file.path));      
+    (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
+    data.hash && (info.hash = await this.getFileHash(file));
   }
   else if(file instanceof Buffer) {
-    info.size = file.length;
-    info.mime = await this.getFileMimeType(file); 
-    info.ext = mime.getExtension(info.mime);
-    info.hash = await hasha(file, { algorithm: 'md5' });
+    data.size && (info.size = file.length);
+    data.mime && (info.mime = await this.getFileMimeType(file)); 
+    (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
+    data.hash && (info.hash = await this.getFileHash(file));
   }
   else {
     throw new Error('Wrong file format');
   } 
 
   return info;
+};
+
+/**
+ * Get the file hash
+ * 
+ * @async
+ * @param {string|Buffer|fs.ReadStream} file
+ * @returns {string}
+ */
+utils.getFileHash = async function (file) {
+  if(typeof file == 'string') {
+    file = fs.createReadStream(file);      
+  }
+
+  if(file instanceof fs.ReadStream) {
+    return await hasha.fromFile(file.path, { algorithm: 'md5' });
+  }
+  else if(file instanceof Buffer) {
+    return await hasha(file, { algorithm: 'md5' });
+  }
+
+  throw new Error('Wrong file format');
 };
 
 /**

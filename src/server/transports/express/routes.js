@@ -7,7 +7,7 @@ module.exports = [
     url: '/file/:hash', 
     fn: node => ([
       midds.networkAccess(node),
-      midds.file(node) 
+      midds.file(node)
     ])
   }
 ];
