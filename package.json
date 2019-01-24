@@ -1,7 +1,7 @@
 {
   "name": "storacle",
-  "version": "0.0.2",
-  "description": "Distributed file storage",
+  "version": "0.0.3",
+  "description": "Decentralized distributed file storage",
   "main": "./src/index.js",
   "bin": {
     "storacle": "./bin/index.js"
@@ -22,6 +22,8 @@
     "storage",
     "network",
     "distributed",
+    "decentralized",
+    "decentralization",
     "distribution",
     "information",
     "data"
@@ -48,7 +50,7 @@
     "request": "^2.88.0",
     "sequelize": "^4.42.0",
     "splaytree": "^2.0.3",
-    "spreadable": "^0.0.4"
+    "spreadable": "0.0.5"
   },
   "repository": {
     "type": "git",

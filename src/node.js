@@ -260,8 +260,18 @@ module.exports = (Parent) => {
         return info.hash;
       }
 
-      let servers = candidates.map(c => c.address);
-      let storeResult = await this.duplicateFileForm(servers, file, info, _.merge({}, options, { timeout: timer() }));
+      const servers = candidates.map(c => c.address).sort((a, b) => {
+        if(a == this.address) {
+          return -1;
+        }
+
+        if(b == this.address) {
+          return 1;
+        }
+
+        return 0;
+      });
+      const storeResult = await this.duplicateFileForm(servers, file, info, _.merge({}, options, { timeout: timer() }));
       
       if(!storeResult && !existing) {
         throw new errors.WorkError('Not found an available server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
@@ -546,9 +556,9 @@ module.exports = (Parent) => {
           if(Date.now() - stat.atimeMs <= this.options.storage.tempLifetime) {
             continue;
           }
-          await fs.remove(filePath.path);
+          await fs.remove(filePath);
         }
-        catch(err) {        
+        catch(err) {
           this.logger.warn(err.stack);
         }      
       }
