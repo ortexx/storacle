@@ -44,15 +44,17 @@ module.exports = [
     name: 'storeFile',
     method: 'post', 
     url: '/store-file/:hash',
-    fn: node => ([
-      (req, res, next) => {
-        const disableControl = req.headers['disable-files-concurrency-control'];
-        disableControl && !utils.isIpEqual(req.clientIp, node.ip)? next(): midds.requestQueueFiles(node)(req, res, next);
+    fn: [
+      node => {
+        return (req, res, next) => {
+          const disableControl = req.headers['disable-files-concurrency-control'];
+          disableControl && !utils.isIpEqual(req.clientIp, node.ip)? next(): midds.requestQueueFiles(node)(req, res, next);
+        }
       }, 
-      midds.requestQueueFileHash(node),
-      midds.filesFormData(node),
-      controllers.storeFile(node)
-    ])
+      midds.requestQueueFileHash,
+      midds.filesFormData,
+      controllers.storeFile
+    ]
   },
 
   /**
@@ -65,9 +67,9 @@ module.exports = [
     name: 'removeFile',
     method: 'post', 
     url: '/remove-file',
-    fn: node => ([      
-      midds.requestQueueFileHash(node), 
-      controllers.removeFile(node) 
-    ])
+    fn: [      
+      midds.requestQueueFileHash, 
+      controllers.removeFile
+    ]
   }
 ];

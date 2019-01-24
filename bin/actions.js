@@ -1,22 +1,5 @@
 const chalk = require('chalk');
-const prettyBytes = require('pretty-bytes');
 const argv = require('optimist').argv;
-
-/**
- * Show some node storage info
- */
-module.exports.showStorageInfo = async node => {
-  const info = await node.getStorageInfo(); 
-  const count = await node.db.getFilesCount() 
-
-  for(let key in info) {
-    info[key] = prettyBytes(info[key]);
-  }
-
-  info.filesCount = count;  
-  //eslint-disable-next-line no-console
-  console.log(chalk.cyan(JSON.stringify(info, null, 2)));
-};
 
 /**
  * Normalize files info

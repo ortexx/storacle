@@ -6,6 +6,7 @@ const DatabaseSequelize = require('./db/transports/loki')();
 const ServerExpress = require('./server/transports/express')();
 const CacheDatabase = require('./cache/transports/database')();
 const SplayTree = require('splaytree');
+const prettyBytes = require('pretty-bytes');
 const utils = require('./utils');
 const errors = require('./errors');
 const Node = require('spreadable/src/node')();
@@ -125,6 +126,23 @@ module.exports = (Parent) => {
     async destroyServices() {
       await super.destroyServices();
       this.cache && await this.cache.destroy(); 
+    }
+
+    /**
+     * @see Node.prototype.getStatusInfo
+     */
+    async getStatusInfo(pretty = false) {      
+      const storage = await this.getStorageInfo();
+
+      if(pretty) {
+        for(let key in storage) {
+          storage[key] = prettyBytes(storage[key]);
+        }
+      }
+
+      return _.merge(await super.getStatusInfo(pretty), storage, {
+        filesCount: await this.db.getFilesCount() 
+      });
     }
 
     /**
