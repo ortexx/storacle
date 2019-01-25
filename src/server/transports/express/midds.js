@@ -36,24 +36,29 @@ module.exports.file = node => {
 module.exports.filesFormData = node => {  
   return [
     async (req, res, next) => {
-      let info = await node.getTempDirInfo();
-      let maxSize = node.storageTempSize - info.size;
-      let count = info.count;
-      let length = +req.headers['content-length'];
-      
-      if(length > node.fileMaxSize) {
-        throw new errors.WorkError('The file is too big', 'ERR_STORACLE_FILE_BIG');
-      }
+      try {
+        let info = await node.getTempDirInfo();
+        let maxSize = node.storageTempSize - info.size;
+        let count = info.count;
+        let length = +req.headers['content-length'];
+        
+        if(length > node.fileMaxSize) {
+          throw new errors.WorkError('The file is too big', 'ERR_STORACLE_FILE_BIG');
+        }
 
-      if(count > node.options.storage.tempLimit || length > maxSize) {
-        throw new errors.WorkError('Too many temp files, please try later', 'ERR_STORACLE_REQUEST_TEMP_LIMIT');
-      }
+        if(count > node.options.storage.tempLimit || length > maxSize) {
+          throw new errors.WorkError('Too many temp files, please try later', 'ERR_STORACLE_REQUEST_TEMP_LIMIT');
+        }
 
-      formData.parse({
-        autoClean: true, 
-        maxFilesSize: node.fileMaxSize,
-        uploadDir: node.tempPath
-      })(req, res, next);
+        formData.parse({
+          autoClean: true, 
+          maxFilesSize: node.fileMaxSize,
+          uploadDir: node.tempPath
+        })(req, res, next);
+      }
+      catch(err) {
+        next(err);
+      }
     },
     formData.format(),
     formData.stream(),

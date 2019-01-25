@@ -39,8 +39,8 @@ module.exports.getFileStoreInfo = node => {
         throw new errors.WorkError('"info.hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }  
       
-      const storage = await node.getStorageInfo();
-
+      const storage = await node.getStorageInfo({ tempUsed: false, tempFree: false });
+      
       res.send({ 
         free: storage.free,
         isExistent: await node.checkFile(info.hash),
@@ -87,7 +87,7 @@ module.exports.storeFile = node => {
         return res.send({ hash: info.hash, link: await node.createFileLink(info.hash) });
       }
 
-      const storage = await node.getStorageInfo();
+      const storage = await node.getStorageInfo({ free: true, tempUsed: false, tempFree: false });
 
       if(info.size > storage.free) {
         throw new errors.WorkError('Not enough space to store', 'ERR_STORACLE_NOT_ENOUGH_PLACE');

@@ -17,7 +17,7 @@ module.exports = (Parent) => {
      */
     async get(key) {
       const cache = await this.node.db.getCache(key);
-      return { key: cache.key, value: cache.value };
+      return cache? { key: cache.key, value: cache.value }: null;
     }
 
     /**

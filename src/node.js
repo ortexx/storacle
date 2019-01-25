@@ -141,7 +141,7 @@ module.exports = (Parent) => {
       }
 
       return _.merge(await super.getStatusInfo(pretty), storage, {
-        filesCount: await this.db.getFilesCount() 
+        filesCount: await this.db.getFilesCount()
       });
     }
 
@@ -162,11 +162,11 @@ module.exports = (Parent) => {
       const available = info.available + used + tempDirInfo.size;
       
       if(typeof this.storageDataSize == 'string') {
-        this.storageDataSize = Math.floor(available * parseInt(this.storageDataSize) / 100);
+        this.storageDataSize = Math.floor(available * parseFloat(this.storageDataSize) / 100);
       }
 
       if(typeof this.storageTempSize == 'string') {
-        this.storageTempSize = Math.floor(available * parseInt(this.storageTempSize) / 100);
+        this.storageTempSize = Math.floor(available * parseFloat(this.storageTempSize) / 100);
       }
 
       if(this.storageDataSize > available) {
@@ -188,11 +188,11 @@ module.exports = (Parent) => {
       }
 
       if(typeof this.storageAutoCleanSize == 'string') {
-        this.storageAutoCleanSize = Math.floor(this.storageDataSize * parseInt(this.storageAutoCleanSize) / 100);
+        this.storageAutoCleanSize = Math.floor(this.storageDataSize * parseFloat(this.storageAutoCleanSize) / 100);
       }
 
       if(typeof this.fileMaxSize == 'string') {
-        this.fileMaxSize = Math.floor(this.storageDataSize * parseInt(this.fileMaxSize) / 100);
+        this.fileMaxSize = Math.floor(this.storageDataSize * parseFloat(this.fileMaxSize) / 100);
       }
 
       if(this.storageAutoCleanSize > this.storageDataSize) {
@@ -450,7 +450,7 @@ module.exports = (Parent) => {
         dublicates = Math.ceil(Math.sqrt(networkSize));
       }
       else if(typeof dublicates == 'string') {
-        dublicates = Math.ceil(networkSize * parseInt(dublicates) / 100); 
+        dublicates = Math.ceil(networkSize * parseFloat(dublicates) / 100); 
       }
 
       if(dublicates > networkSize) {
@@ -464,26 +464,48 @@ module.exports = (Parent) => {
      * Get disk usage information
      * 
      * @async
+     * @param {object} data
      * @returns {object}
      */
-    async getStorageInfo() {
+    async getStorageInfo(data = {}) {
       this.initializationFilter();
-      let info = await utils.getDiskInfo(this.filesPath); 
-      const used = await this.getStorageTotalSize();
-      const tempUsed = (await this.getTempDirInfo()).size;
 
-      info = {
-        total: info.total,
-        available: info.available + used,
-        allowed: this.storageDataSize,
-        used,
-        free: this.storageDataSize - used,
-        clean: this.storageAutoCleanSize,
-        tempAllowed: this.storageTempSize,
-        tempUsed,
-        tempFree: this.storageTempSize - tempUsed
-      };
+      data = Object.assign({
+        total: true,
+        available: true,
+        allowed: true,
+        used: true,
+        free: true,
+        clean: true,
+        tempAllowed: true,
+        tempUsed: true,
+        tempFree: true,
+        fileMaxSize: true
+      }, data);
 
+      const diskInfo = await utils.getDiskInfo(this.filesPath);      
+      const info = {};
+      let used;
+      let tempUsed;
+
+      if(data.used || data.available || data.free) {
+        used = await this.getStorageTotalSize();
+      }
+      
+      if(data.tempUsed || data.tempFree) {
+        tempUsed = (await this.getTempDirInfo()).size;
+      }
+
+      data.total && (info.total = diskInfo.total);
+      data.available && (info.available = diskInfo.available + used);
+      data.allowed && (info.allowed = this.storageDataSize);
+      data.used && (info.used = used);
+      data.free && (info.free = this.storageDataSize - used);
+      data.clean && (info.clean = this.storageAutoCleanSize);      
+      data.tempAllowed && (info.tempAllowed = this.storageTempSize);
+      data.tempUsed && (info.tempUsed = tempUsed);
+      data.tempFree && (info.tempFree = this.storageTempSize - tempUsed);
+      data.fileMaxSize && (info.fileMaxSize = this.fileMaxSize);
       return info;
     }   
     
@@ -499,7 +521,8 @@ module.exports = (Parent) => {
         return;
       }
 
-      const storage = await this.getStorageInfo();
+      const storageInfoData = { tempUsed: false, tempFree: false };
+      const storage = await this.getStorageInfo(storageInfoData);
       const needSize = this.storageAutoCleanSize - storage.free;
 
       if(needSize <= 0) {
@@ -541,7 +564,7 @@ module.exports = (Parent) => {
         try {
           await this.removeFileFromStorage(path.basename(data.path));
 
-          if((await this.getStorageInfo()).free >= this.storageAutoCleanSize) {
+          if((await this.getStorageInfo(storageInfoData)).free >= this.storageAutoCleanSize) {
             break;
           }
         }
@@ -550,7 +573,7 @@ module.exports = (Parent) => {
         }
       } 
 
-      if((await this.getStorageInfo()).free < this.storageAutoCleanSize) {
+      if((await this.getStorageInfo(storageInfoData)).free < this.storageAutoCleanSize) {
         this.logger.error(`Unable to free up space on the disk completely`);
       }
 
