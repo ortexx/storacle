@@ -1,6 +1,6 @@
 const errors = require('../../../../../errors');
 const utils = require('../../../../../utils');
-const fs = require('fs-extra');
+const fs = require('fs');
 const path = require('path');
 
 /**
@@ -58,8 +58,10 @@ module.exports.getFileStoreInfo = node => {
  */
 module.exports.storeFile = node => {  
   return async (req, res, next) => {
+    let file;
+
     try {
-      let file = req.body.file;
+      file = req.body.file;
       const dublicates = req.body.dublicates || [];
       const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
       
@@ -84,6 +86,7 @@ module.exports.storeFile = node => {
       await node.fileInfoFilter(info);
 
       if(await node.checkFile(info.hash)) {
+        file.destroy();
         return res.send({ hash: info.hash, link: await node.createFileLink(info.hash) });
       }
 
@@ -92,23 +95,29 @@ module.exports.storeFile = node => {
       if(info.size > storage.free) {
         throw new errors.WorkError('Not enough space to store', 'ERR_STORACLE_NOT_ENOUGH_PLACE');
       }
-      
-      await node.addFileToStorage(file, info.hash);  
+
+      await node.addFileToStorage(file, info.hash);      
       const link = await node.createFileLink(info.hash);
+      file.destroy();
 
       if(dublicates.length) {
-        const ws = node.createFileStream(info.hash); 
+        file = fs.createReadStream(node.getFilePath(info.hash));
         
-        node.duplicateFileForm(dublicates, ws, info).then(() => {
-          node.logger.info(`File ${info.hash} has been duplicate from ${node.address}`);
-        }).catch((err) => {
-          node.logger.error(err.stack);
-        });
-      }
+        node.duplicateFileForm(dublicates, file, info)
+          .then(() => {
+            file.destroy();
+            node.logger.info(`File ${info.hash} has been duplicate from ${node.address}`);
+          })
+          .catch((err) => {
+            file.destroy();
+            node.logger.error(err.stack);
+          });
+        }
 
       res.send({ hash: info.hash, link});
     }
     catch(err) {
+      file.destroy();
       next(err);
     }    
   }

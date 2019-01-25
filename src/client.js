@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const request = require('request');
 const Client = require('spreadable/src/client')();
-const fs = require('fs-extra');
+const fs = require('fs');
 const utils = require('./utils');
 const errors = require('./errors');
 
@@ -155,28 +155,38 @@ module.exports = (Parent) => {
      * @param {string|Buffer|fs.ReadStream} file
      * @param {object} [options]
      */
-    async storeFile(file, options = {}) {
-      this.initializationFilter();
+    async storeFile(file, options = {}) {      
+      const destroyFileStream = () => (file instanceof fs.ReadStream) && file.destroy();      
 
-      if(typeof file == 'string') {
-        file = fs.createReadStream(file);      
-      }
+      try {
+        this.initializationFilter();
+        const info = await utils.getFileInfo(file);
 
-      const info = await utils.getFileInfo(file);
-      
-      return (await this.request('store-file', {
-        formData: {
-          file: {
-            value: file,
-            options: {
-              filename: info.hash + (info.ext? '.' + info.ext: ''),
-              contentType: info.mime
+        if(typeof file == 'string') {
+          file = fs.createReadStream(file);
+        }
+
+        const result = await this.request('store-file', {
+          formData: {
+            file: {
+              value: file,
+              options: {
+                filename: info.hash + (info.ext? '.' + info.ext: ''),
+                contentType: info.mime
+              }
             }
-          }
-        },
-        timeout: options.timeout || this.options.request.fileStoreTimeout,
-        useInitialAddress: options.useInitialAddress
-      })).hash;
+          },
+          timeout: options.timeout || this.options.request.fileStoreTimeout,
+          useInitialAddress: options.useInitialAddress
+        });
+
+        destroyFileStream();
+        return result.hash;
+      }
+      catch(err) {
+        destroyFileStream();
+        throw err;
+      }
     }  
 
     /**

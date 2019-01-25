@@ -38,7 +38,7 @@ module.exports = [
    * Store the file
    * 
    * @api {post} /api/slave/store-file/
-   * @apiParam {fs.ReadStream} file - file
+   * @apiParam {fs.ReadStream|string} file
    */
   { 
     name: 'storeFile',

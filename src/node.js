@@ -1,5 +1,6 @@
 const path = require('path');
-const fs = require('fs-extra');
+const fs = require('fs');
+const fse = require('fs-extra');
 const urlib = require('url');
 const _ = require('lodash');
 const DatabaseSequelize = require('./db/transports/loki')();
@@ -76,8 +77,8 @@ module.exports = (Parent) => {
       this.storagePath = this.options.storagePath || path.join(process.cwd(), 'storacle', `storage-${this.port}`);
       this.filesPath = path.join(this.storagePath, 'files');
       this.tempPath = path.join(this.storagePath, 'tmp');
-      await fs.ensureDir(this.filesPath); 
-      await fs.ensureDir(this.tempPath);
+      await fse.ensureDir(this.filesPath); 
+      await fse.ensureDir(this.tempPath);
       await super.init();     
       await this.calculateStorageInfo();
     }
@@ -86,7 +87,7 @@ module.exports = (Parent) => {
      * @see Node.prototype.destroy
      */
     async destroy() {
-      await fs.remove(this.storagePath);
+      await fse.remove(this.storagePath);
       super.destroy();
     }   
 
@@ -233,74 +234,85 @@ module.exports = (Parent) => {
      * @param {object} [options]
      */
     async storeFile(file, options = {}) {
-      this.initializationFilter();
-      let info;
-      const timer = utils.getRequestTimer(options.timeout);
+      const destroyFileStream = () => (file instanceof fs.ReadStream) && file.destroy();
 
-      if(typeof file == 'string') {
-        file = fs.createReadStream(file);
-      }
+      try {
+        this.initializationFilter();        
+        const timer = utils.getRequestTimer(options.timeout);
+        const info = await utils.getFileInfo(file);
 
-      info = await utils.getFileInfo(file);
-
-      if(!info.size || !info.hash) {
-        throw new errors.WorkError('This file cannot be added to the network', 'ERR_STORACLE_INVALID_FILE');
-      }
-
-      let results = await this.requestMasters('get-file-store-candidate', {
-        body: {
-          info
-        },
-        timeout: timer([this.getRequestMastersTimeout(), this.options.request.fileStoreTimeout])
-      });
-      
-      let existing = 0;
-      results.forEach(r => existing += r.existing);
-      const dublicates = await this.getFileDuplicatesCount(info);
-      const limit = dublicates - existing;
-
-      if(limit <= 0) {
-        return info.hash;
-      }
-
-      const filterOptions = await this.getFileStoreCandidateFilterOptions(info);
-      filterOptions.limit = limit;
-      const candidates = this.filterCandidatesMatrix(results.map(r => r.candidates), filterOptions);
-
-      if(!candidates.length && !existing) {
-        throw new errors.WorkError('Not found a suitable server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
-      }
-
-      if(candidates.length) {
-        await this.db.addCandidate(candidates[0].address, 'storeFile');
-      }
-      else {
-        return info.hash;
-      }
-
-      const servers = candidates.map(c => c.address).sort((a, b) => {
-        if(a == this.address) {
-          return -1;
+        if(!info.size || !info.hash) {        
+          throw new errors.WorkError('This file cannot be added to the network', 'ERR_STORACLE_INVALID_FILE');
         }
 
-        if(b == this.address) {
-          return 1;
+        let results = await this.requestMasters('get-file-store-candidate', {
+          body: {
+            info
+          },
+          timeout: timer([this.getRequestMastersTimeout(), this.options.request.fileStoreTimeout])
+        });
+        
+        let existing = 0;
+        results.forEach(r => existing += r.existing);
+        const dublicates = await this.getFileDuplicatesCount(info);
+        const limit = dublicates - existing;
+
+        if(limit <= 0) {
+          destroyFileStream();
+          return info.hash;
         }
 
-        return 0;
-      });
-      const storeResult = await this.duplicateFileForm(servers, file, info, _.merge({}, options, { timeout: timer() }));
-      
-      if(!storeResult && !existing) {
-        throw new errors.WorkError('Not found an available server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
-      }
+        const filterOptions = await this.getFileStoreCandidateFilterOptions(info);
+        filterOptions.limit = limit;
+        const candidates = this.filterCandidatesMatrix(results.map(r => r.candidates), filterOptions);
 
-      if(!storeResult) {
-        return info.hash;
-      }
+        if(!candidates.length && !existing) {
+          throw new errors.WorkError('Not found a suitable server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
+        }
 
-      this.cache && await this.cache.set(storeResult.hash, { link: storeResult.link });        
-      return storeResult.hash;
+        if(candidates.length) {
+          await this.db.addCandidate(candidates[0].address, 'storeFile');
+        }
+        else {
+          destroyFileStream();
+          return info.hash;
+        }
+
+        const servers = candidates.map(c => c.address).sort((a, b) => {
+          if(a == this.address) {
+            return -1;
+          }
+
+          if(b == this.address) {
+            return 1;
+          }
+
+          return 0;
+        });
+
+        if(typeof file == 'string') {
+          file = fs.createReadStream(file);
+        }
+        
+        const storeResult = await this.duplicateFileForm(servers, file, info, _.merge({}, options, { timeout: timer() }));
+        
+        if(!storeResult && !existing) {
+          throw new errors.WorkError('Not found an available server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
+        }
+
+        if(!storeResult) {
+          destroyFileStream();
+          return info.hash;
+        }
+
+        this.cache && await this.cache.set(storeResult.hash, { link: storeResult.link });   
+        destroyFileStream();  
+        return storeResult.hash;
+      }
+      catch(err) {
+        destroyFileStream();
+        throw err;
+      }
     }
 
     /**
@@ -533,12 +545,12 @@ module.exports = (Parent) => {
       const tree = new SplayTree(((a, b) => a.atimeMs - b.atimeMs));
 
       const walk = async (dir) => {
-        const files = await fs.readdir(dir);
+        const files = await fse.readdir(dir);
 
         for(let i = 0; i < files.length; i++) {
           try {
             const filePath = path.join(dir, files[i])
-            const stat = await fs.stat(filePath);
+            const stat = await fse.stat(filePath);
 
             if(stat.isDirectory()) {
               await walk(filePath);
@@ -587,17 +599,17 @@ module.exports = (Parent) => {
      */
     async cleanUpTempDir() {
       this.initializationFilter();
-      const files = await fs.readdir(this.tempPath);
+      const files = await fse.readdir(this.tempPath);
 
       for(let i = 0; i < files.length; i++) {
         try {
           const filePath = path.join(this.tempPath, files[i]);
-          const stat = await fs.stat(filePath);
+          const stat = await fse.stat(filePath);
 
           if(Date.now() - stat.atimeMs <= this.options.storage.tempLifetime) {
             continue;
           }
-          await fs.remove(filePath);
+          await fse.remove(filePath);
         }
         catch(err) {
           this.logger.warn(err.stack);
@@ -621,11 +633,11 @@ module.exports = (Parent) => {
       let count = 0;      
 
       const walk = async (dir) => {
-        const files = await fs.readdir(dir);
+        const files = await fse.readdir(dir);
 
         for(let i = 0; i < files.length; i++) {
           const filePath = path.join(dir, files[i])
-          const stat = await fs.stat(filePath);
+          const stat = await fse.stat(filePath);
 
           if(stat.isDirectory()) {
             await walk(filePath);
@@ -678,31 +690,32 @@ module.exports = (Parent) => {
       });
 
       const walk = async (dir) => {
-        const files = await fs.readdir(dir);
+        const files = await fse.readdir(dir);
   
         for(let i = 0; i < files.length; i++) {
-          let file;
-          let info;
+          const filePath = path.join(dir, files[i]);
+          let file;          
+          let info;  
   
           try {
-            const filePath = path.join(dir, files[i])
-            const stat = await fs.stat(filePath);
+            const stat = await fse.stat(filePath);
     
             if(stat.isDirectory()) {
               await walk(filePath);
               continue;
             }
   
-            file = fs.createReadStream(filePath);
-            info = await utils.getFileInfo(file);
+            info = await utils.getFileInfo(filePath);
           }
-          catch(err) {
+          catch(err) {            
             if(err.code != 'ENOENT') {
               throw err;
             }
           }
   
           try {
+            file = fs.createReadStream(filePath);
+
             await this.requestSlave(address, 'store-file', {
               formData: {
                 file: {
@@ -716,9 +729,12 @@ module.exports = (Parent) => {
               timeout: timer() || this.options.request.fileStoreTimeout
             });            
             success++;
+            file.destroy();
             this.logger.info(`File ${info.hash} has been exported`);
           }
           catch(err) {
+            file.destroy();
+
             if(options.strict) {
               throw err;
             }
@@ -760,9 +776,8 @@ module.exports = (Parent) => {
      * @param {string} hash 
      */
     async createFileLink(hash) {
-      this.initializationFilter();    
-      const file = this.createFileStream(hash);
-      const info = await utils.getFileInfo(file, { hash: false });
+      this.initializationFilter();
+      const info = await utils.getFileInfo(this.getFilePath(hash), { hash: false });
       return `${this.options.server.https? 'https': 'http'}://${this.address}/file/${hash}${info.ext? '.' + info.ext: ''}`;
     }  
   
@@ -775,7 +790,7 @@ module.exports = (Parent) => {
      */
     async checkFile(hash) {
       this.initializationFilter();    
-      return await fs.pathExists(this.getFilePath(hash));
+      return await fse.pathExists(this.getFilePath(hash));
     }
 
     /**
@@ -793,13 +808,13 @@ module.exports = (Parent) => {
         throw new errors.WorkError('File system is not available now, please try later', 'ERR_STORACLE_FS_NOT_AVAILABLE');
       }
 
-      const stat = await fs.stat(file.path);
+      const stat = await fse.stat(file.path);
       const filePath = this.getFilePath(hash);
       const dir = path.dirname(filePath);
 
       try {
-        await fs.ensureDir(dir);
-        await fs.move(file.path, filePath, { overwrite: true });
+        await fse.ensureDir(dir);
+        await fse.move(file.path, filePath, { overwrite: true });
         await this.db.increaseFilesTotalSize(stat.size);
         await this.db.increaseFilesCount();
       }
@@ -823,14 +838,14 @@ module.exports = (Parent) => {
       }
 
       const filePath = this.getFilePath(hash);
-      const stat = await fs.stat(filePath);
-      let dir = path.dirname(filePath);    
+      const stat = await fse.stat(filePath);
+      let dir = path.dirname(filePath);
 
       try {
-        await fs.remove(filePath); 
+        await fse.remove(filePath); 
         await this.db.decreaseFilesTotalSize(stat.size);  
         await this.db.decreaseFilesCount();
-        await this.normalizeDir(dir); 
+        await this.normalizeDir(dir);
       }
       catch(err) {
         await this.normalizeDir(dir);
@@ -848,8 +863,8 @@ module.exports = (Parent) => {
       const filesPath = path.normalize(this.filesPath);
 
       while(dir.length > filesPath.length) {
-        if(!((await fs.readdir(dir)).length)) {
-          await fs.remove(dir);
+        if(!((await fse.readdir(dir)).length)) {
+          await fse.remove(dir);
         }  
         
         dir = path.dirname(dir);
@@ -872,13 +887,13 @@ module.exports = (Parent) => {
           return;
         }
 
-        const files = await fs.readdir(dir);      
+        const files = await fse.readdir(dir);      
 
         for(let i = 0; i < files.length; i++) {
           try {
             const name = files[i];
             const filePath = path.join(dir, name);
-            foldersSize += (await fs.stat(filePath)).size;
+            foldersSize += (await fse.stat(filePath)).size;
             await walk(filePath, level + 1);
           }
           catch(err) {
@@ -903,12 +918,12 @@ module.exports = (Parent) => {
       this.initializationFilter();
       let size = 0;
       let count = 0;    
-      const files = await fs.readdir(this.tempPath);
+      const files = await fse.readdir(this.tempPath);
 
       for(let i = 0; i < files.length; i++) {
         try {
           const filePath = path.join(this.tempPath, files[i]);
-          size += (await fs.stat(filePath)).size;
+          size += (await fse.stat(filePath)).size;
           count += 1;
         }
         catch(err) {
@@ -1071,16 +1086,6 @@ module.exports = (Parent) => {
       this.options.storage.tempLifetime = utils.getMs(this.options.storage.tempLifetime);
       this.options.request.fileGetTimeout = utils.getMs(this.options.request.fileGetTimeout);
       this.options.request.fileStoreTimeout = utils.getMs(this.options.request.fileStoreTimeout); 
-    }
-
-    /**
-     * Check file info is available for this node
-     * 
-     * @param {string} hash
-     * @returns {boolean}
-     */
-    createFileStream(hash) {
-      return fs.createReadStream(this.getFilePath(hash));
     }
 
     /**

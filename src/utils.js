@@ -2,7 +2,8 @@ const mime = require('mime');
 const hasha = require('hasha');
 const mmm = require('mmmagic');
 const disk = require('diskusage');
-const fs = require('fs-extra');
+const fse = require('fs-extra');
+const fs = require('fs');
 const utils = Object.assign({}, require('spreadable/src/utils'));
 
 /**
@@ -38,10 +39,6 @@ utils.getDiskInfo = async function (dir) {
  * @returns {object}
  */
 utils.getFileInfo = async function (file, data = {}) {
-  if(typeof file == 'string') {
-    file = fs.createReadStream(file);      
-  }
-
   data = Object.assign({
     size: true,
     mime: true,
@@ -51,11 +48,12 @@ utils.getFileInfo = async function (file, data = {}) {
 
   let info = {};
 
-  if(file instanceof fs.ReadStream) {
-    data.size && (info.size = (await fs.stat(file.path)).size);
-    data.mime && (info.mime = await this.getFileMimeType(file.path));      
+  if((file instanceof fs.ReadStream) || typeof file == 'string') {
+    const filePath = file.path || file;
+    data.size && (info.size = (await fse.stat(filePath)).size);
+    data.mime && (info.mime = await this.getFileMimeType(filePath));
     (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
-    data.hash && (info.hash = await this.getFileHash(file));
+    data.hash && (info.hash = await this.getFileHash(filePath));
   }
   else if(file instanceof Buffer) {
     data.size && (info.size = file.length);
@@ -78,12 +76,8 @@ utils.getFileInfo = async function (file, data = {}) {
  * @returns {string}
  */
 utils.getFileHash = async function (file) {
-  if(typeof file == 'string') {
-    file = fs.createReadStream(file);      
-  }
-
-  if(file instanceof fs.ReadStream) {
-    return await hasha.fromFile(file.path, { algorithm: 'md5' });
+  if((file instanceof fs.ReadStream) || typeof file == 'string') {
+    return await hasha.fromFile(file.path || file, { algorithm: 'md5' });
   }
   else if(file instanceof Buffer) {
     return await hasha(file, { algorithm: 'md5' });

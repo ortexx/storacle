@@ -17,11 +17,11 @@ module.exports.file = node => {
           throw new errors.NotFoundError('File not found');
         }
 
-        const file = await node.createFileStream(hash);
-        const info = await utils.getFileInfo(file, { hash: false });
+        const filePath = await node.getFilePath(hash);
+        const info = await utils.getFileInfo(filePath, { hash: false });
         info.mime && res.setHeader("Content-Type", info.mime);
         res.setHeader("Content-Length", info.size);
-        res.sendFile(file.path);
+        res.sendFile(filePath);
       }
       catch(err) {
         next(err);
