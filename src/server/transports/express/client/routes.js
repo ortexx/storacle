@@ -5,6 +5,19 @@ const midds = require('../midds');
 
 module.exports = [
   /**
+   * Request the file
+   * 
+   * @api {post} /client/request-file/:hash
+   * @apiParam {string} hash - file hash
+   */
+  { 
+    name: 'requestFile',
+    method: 'get',
+    url: '/request-file/:hash',
+    fn: controllers.requestFile
+  },
+
+  /**
    * Store a file
    * 
    * @api {post} /client/store-file/

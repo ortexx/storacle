@@ -17,9 +17,11 @@ module.exports.file = node => {
           throw new errors.NotFoundError('File not found');
         }
 
+        const cache = Math.ceil(node.options.file.responseCacheLifetime / 1000);
         const filePath = await node.getFilePath(hash);
         const info = await utils.getFileInfo(filePath, { hash: false });
         info.mime && res.setHeader("Content-Type", info.mime);
+        cache && res.set('Cache-Control', `public, max-age=${cache}`);
         res.setHeader("Content-Length", info.size);
         res.sendFile(filePath);
       }

@@ -40,9 +40,10 @@ module.exports = (Parent) => {
           tempLifetime: '1d',
           tempLimit: 1000
         },
-        file: {
+        file: {          
           maxSize: '50%',
           preferredDublicates: 'auto',
+          responseCacheLifetime: '7d',
           mimeTypeWhitelist: [],
           mimeTypeBlacklist: [],
           extensionsWhitelist: [],
@@ -240,7 +241,7 @@ module.exports = (Parent) => {
         this.initializationFilter();        
         const timer = utils.getRequestTimer(options.timeout);
         const info = await utils.getFileInfo(file);
-
+        
         if(!info.size || !info.hash) {        
           throw new errors.WorkError('This file cannot be added to the network', 'ERR_STORACLE_INVALID_FILE');
         }
@@ -385,7 +386,7 @@ module.exports = (Parent) => {
       let links = [];
       results.forEach(r => links.length < this.__maxCandidates && (links = links.concat(r.links)));
       links.length > this.__maxCandidates && (links = links.slice(0, this.__maxCandidates));
-      return links.map(item => item.link);
+      return links.filter(item => this.isValidFileLink(item.link)).map(item => item.link);
     }
 
     /**
@@ -1083,6 +1084,7 @@ module.exports = (Parent) => {
       this.options.storage.tempSize = utils.getBytes(this.options.storage.tempSize);
       this.options.storage.autoCleanSize = utils.getBytes(this.options.storage.autoCleanSize);
       this.options.file.maxSize = utils.getBytes(this.options.file.maxSize); 
+      this.options.file.responseCacheLifetime = utils.getMs(this.options.file.responseCacheLifetime);      
       this.options.storage.tempLifetime = utils.getMs(this.options.storage.tempLifetime);
       this.options.request.fileGetTimeout = utils.getMs(this.options.request.fileGetTimeout);
       this.options.request.fileStoreTimeout = utils.getMs(this.options.request.fileStoreTimeout); 

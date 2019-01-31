@@ -41,7 +41,7 @@ module.exports.getFileLinks = node => {
       }
 
       const results = await node.requestSlaves('get-file-link-info', node.createRequestSlavesOptions(req.body));
-      let links = results.filter(r => r.link);
+      let links = results.filter(r => node.isValidFileLink(r.link));
       links.length > node.__maxCandidates && (links = links.slice(0, node.__maxCandidates));
       return res.send({ links: links });
     }

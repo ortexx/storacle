@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Decentralized distributed file storage",
   "main": "./src/index.js",
   "bin": {
@@ -13,7 +13,14 @@
   "homepage": "https://github.com/ortexx/storacle",
   "scripts": {
     "eslint": "eslint src bin",
-    "test": "mocha ./test/index.js"
+    "test": "mocha ./test/index.js",
+    "build-client": "webpack --config=webpack.client.js",
+    "build-client-prod": "NODE_ENV=production webpack --config=webpack.client.js"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run eslint && npm run test && npm run build-client-prod"
+    }
   },
   "keywords": [
     "storacle",
@@ -30,13 +37,21 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.7.0",
     "chai": "^4.2.0",
+    "eslint": "^5.9.0",
     "get-port": "^4.0.0",
+    "husky": "^1.3.1",
     "mocha": "^5.2.0",
-    "eslint": "^5.9.0"
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1"
   },
   "dependencies": {
     "chalk": "^2.4.1",
+    "create-hash": "^1.2.0",
     "diskusage": "^0.2.6",
     "express": "^4.16.4",
     "express-form-data": "^2.0.8",
@@ -45,12 +60,12 @@
     "lodash": "^4.17.11",
     "mime": "^2.4.0",
     "mmmagic": "^0.5.2",
+    "node-fetch": "^2.3.0",
     "optimist": "^0.6.1",
     "pretty-bytes": "^5.1.0",
-    "request": "^2.88.0",
     "sequelize": "^4.42.0",
     "splaytree": "^2.0.3",
-    "spreadable": ">=0.0.7"
+    "spreadable": ">=0.0.10"
   },
   "repository": {
     "type": "git",

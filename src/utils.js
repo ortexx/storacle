@@ -39,6 +39,8 @@ utils.getDiskInfo = async function (dir) {
  * @returns {object}
  */
 utils.getFileInfo = async function (file, data = {}) {
+  const isBrowserEnv = this.isBrowserEnv();
+
   data = Object.assign({
     size: true,
     mime: true,
@@ -48,14 +50,20 @@ utils.getFileInfo = async function (file, data = {}) {
 
   let info = {};
 
-  if((file instanceof fs.ReadStream) || typeof file == 'string') {
+  if(isBrowserEnv && file instanceof Blob) {
+    data.size && (info.size = file.size);
+    data.mime && (info.mime = file.type);
+    (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
+    data.hash && (info.hash = await this.getFileHash(file));
+  }
+  else if(!isBrowserEnv && ((file instanceof fs.ReadStream) || typeof file == 'string')) {
     const filePath = file.path || file;
     data.size && (info.size = (await fse.stat(filePath)).size);
     data.mime && (info.mime = await this.getFileMimeType(filePath));
     (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
     data.hash && (info.hash = await this.getFileHash(filePath));
   }
-  else if(file instanceof Buffer) {
+  else if(!isBrowserEnv && (file instanceof Buffer)) {
     data.size && (info.size = file.length);
     data.mime && (info.mime = await this.getFileMimeType(file)); 
     (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
@@ -76,10 +84,15 @@ utils.getFileInfo = async function (file, data = {}) {
  * @returns {string}
  */
 utils.getFileHash = async function (file) {
-  if((file instanceof fs.ReadStream) || typeof file == 'string') {
+  const isBrowserEnv = this.isBrowserEnv();
+
+  if(isBrowserEnv && file instanceof Blob) {
+    return await hasha(await this.blobToBuffer(file), { algorithm: 'md5' });
+  }
+  else if(!isBrowserEnv && ((file instanceof fs.ReadStream) || typeof file == 'string')) {
     return await hasha.fromFile(file.path || file, { algorithm: 'md5' });
   }
-  else if(file instanceof Buffer) {
+  else if(!isBrowserEnv && (file instanceof Buffer)) {
     return await hasha(file, { algorithm: 'md5' });
   }
 
@@ -106,5 +119,30 @@ utils.getFileMimeType = async function (content){
     });
   });    
 };
+
+/**
+ * Convert blob to Buffer
+ * 
+ * @async
+ * @returns {Buffer}
+ */
+utils.blobToBuffer = async function (blob) {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    const fn = result => {
+      reader.removeEventListener('loadend', fn);
+  
+      if(result.error) {
+        return reject(result.error)
+      }
+  
+      resolve(Buffer.from(reader.result));
+    }
+  
+    reader.addEventListener('loadend', fn);
+    reader.readAsArrayBuffer(blob);
+  });  
+}
 
 module.exports = utils;

@@ -1,4 +1,26 @@
 const path = require('path');
+const errors = require('../../../../errors');
+
+/**
+ * Request the file
+ */
+module.exports.requestFile = node => {
+  return async (req, res, next) => {
+    try {
+      const hash = req.params.hash;
+      const link = await node.getFileLink(hash);
+
+      if(!link) {
+        throw new errors.NotFoundError('File not found');
+      }
+
+      res.redirect(link);
+    }
+    catch(err) {
+      next(err);
+    }
+  }
+};
 
 /**
  * Store the file

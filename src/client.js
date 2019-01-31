@@ -1,5 +1,5 @@
-const _ = require('lodash');
-const request = require('request');
+const merge = require('lodash/merge');
+const fetch = require('node-fetch');
 const Client = require('spreadable/src/client')();
 const fs = require('fs');
 const utils = require('./utils');
@@ -11,7 +11,7 @@ module.exports = (Parent) => {
    */
   return class ClientStoracle extends (Parent || Client) {
     constructor(options = {}) {
-      options = _.merge({
+      options = merge({
         request: {
           fileStoreTimeout: '2h',
           fileGetTimeout: '2s'
@@ -70,10 +70,11 @@ module.exports = (Parent) => {
      */
     async getFileToBuffer(hash, options = {}) {
       this.initializationFilter();
+      this.envFilter(false, 'getFileToBuffer');
       const timeout = options.timeout || this.options.request.clientTimeout;
       const timer = utils.getRequestTimer(timeout);
 
-      const result  = await this.request('get-file-link', {
+      let result  = await this.request('get-file-link', {
         body: { hash },
         timeout: timer([ timeout, this.options.request.fileGetTimeout ]),
         useInitialAddress: options.useInitialAddress
@@ -83,16 +84,14 @@ module.exports = (Parent) => {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
       
-      return await new Promise(async (resolve, reject) => {    
+      return await new Promise(async (resolve, reject) => {
         try {
-          const req = request(this.createDefaultRequestOptions({ 
-            url: result.link,
+          result = await fetch(result.link, this.createDefaultRequestOptions({ 
             method: 'GET',
-            json: false,
             timeout: timer()
           }));
           const chunks = [];
-          req
+          result.body
             .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))  
             .on('data', chunk => chunks.push(chunk) )        
             .on('end', () => resolve(Buffer.concat(chunks)));
@@ -114,10 +113,11 @@ module.exports = (Parent) => {
      */
     async getFileToPath(hash, path, options = {}) {
       this.initializationFilter();
+      this.envFilter(false, 'getFileToPath');
       const timeout = options.timeout || this.options.request.clientTimeout;
       const timer = utils.getRequestTimer(timeout);
 
-      const result  = await this.request('get-file-link', {
+      let result  = await this.request('get-file-link', {
         body: { hash },
         timeout: timer([ timeout, this.options.request.fileGetTimeout ]),
         useInitialAddress: options.useInitialAddress
@@ -127,20 +127,18 @@ module.exports = (Parent) => {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
 
-      return await new Promise(async (resolve, reject) => {    
+      return await new Promise(async (resolve, reject) => {
         try { 
           const ws = fs.createWriteStream(path);
-          const req = request(this.createDefaultRequestOptions({ 
-            url: result.link,
+          result = await fetch(result.link, this.createDefaultRequestOptions({
             method: 'GET',
-            json: false,
             timeout: timer()
           }));
-          req
-            .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))  
+          result.body
+            .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))
             .pipe(ws)
             .on('error', reject)
-            .on('finish', () => resolve());   
+            .on('finish', resolve);
         }   
         catch(err) {
           reject(err);
@@ -149,14 +147,45 @@ module.exports = (Parent) => {
     }
 
     /**
+     * Get file to blob
+     * 
+     * @param {string} hash
+     * @param {object} [options]
+     * @returns {Blob} 
+     */
+    async getFileToBlob(hash, options = {}) {
+      this.initializationFilter();
+      this.envFilter(true, 'getFileToBlob');
+      const timeout = options.timeout || this.options.request.clientTimeout;
+      const timer = utils.getRequestTimer(timeout);
+
+      let result  = await this.request('get-file-link', {
+        body: { hash },
+        timeout: timer([ timeout, this.options.request.fileGetTimeout ]),
+        useInitialAddress: options.useInitialAddress
+      });
+
+      if(!result.link) {
+        throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
+      }
+      
+      result = await fetch(result.link, this.createDefaultRequestOptions({
+        method: 'GET',
+        timeout: timer()
+      }));
+
+      return result.blob();
+    }
+
+    /**
      * Store the file to the storage
      * 
      * @async
-     * @param {string|Buffer|fs.ReadStream} file
+     * @param {string|Buffer|fs.ReadStream|Blob|File} file
      * @param {object} [options]
      */
-    async storeFile(file, options = {}) {      
-      const destroyFileStream = () => (file instanceof fs.ReadStream) && file.destroy();      
+    async storeFile(file, options = {}) {
+      const destroyFileStream = () => (fs.ReadStream && file instanceof fs.ReadStream) && file.destroy();
 
       try {
         this.initializationFilter();
@@ -165,7 +194,7 @@ module.exports = (Parent) => {
         if(typeof file == 'string') {
           file = fs.createReadStream(file);
         }
-
+        
         const result = await this.request('store-file', {
           formData: {
             file: {
@@ -187,7 +216,7 @@ module.exports = (Parent) => {
         destroyFileStream();
         throw err;
       }
-    }  
+    }
 
     /**
      * Remove file
@@ -205,6 +234,17 @@ module.exports = (Parent) => {
         timeout: options.timeout,
         useInitialAddress: options.useInitialAddress
       });
+    }
+
+    /**
+     * Create a deferred file link
+     * 
+     * @param {string} hash 
+     * @param {object} options 
+     * @returns {string}
+     */
+    createRequestedFileLink(hash, options = {}) {
+      return this.createRequestUrl(`request-file/${hash}`, options);
     }
 
     /**
