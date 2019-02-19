@@ -16,10 +16,12 @@ module.exports.getFileStoreCandidate = node => {
         throw new errors.WorkError('"info.hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }  
 
-      const results = await node.requestSlaves('get-file-store-info', node.createRequestSlavesOptions(req.body)); 
+      const results = await node.requestSlaves('get-file-store-info', node.createRequestSlavesOptions(req.body, {
+        responseSchema: node.server.getFileStoreCandidateSlaveResponseSchema()
+      })); 
       const existing = results.filter(c => c.isExistent).length;
       const actual = results.filter(c => !c.isExistent && c.isAvailable);      
-      const candidates = node.filterCandidates(actual, await node.getFileStoreCandidateFilterOptions(info)); 
+      const candidates = await node.filterCandidates(actual, await node.getFileStoreCandidateFilterOptions(info));
       res.send({ candidates, existing });
     }
     catch(err) {
@@ -40,10 +42,12 @@ module.exports.getFileLinks = node => {
         throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
 
-      const results = await node.requestSlaves('get-file-link-info', node.createRequestSlavesOptions(req.body));
+      const results = await node.requestSlaves('get-file-link-info', node.createRequestSlavesOptions(req.body, {
+        responseSchema: node.server.getFileLinksSlaveResponseSchema()
+      }));
       let links = results.filter(r => node.isValidFileLink(r.link));
       links.length > node.__maxCandidates && (links = links.slice(0, node.__maxCandidates));
-      return res.send({ links: links });
+      return res.send({ links });
     }
     catch(err) {
       next(err);

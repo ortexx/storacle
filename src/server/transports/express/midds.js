@@ -85,7 +85,7 @@ module.exports.requestQueueFiles = node => {
  */
 module.exports.requestQueueFileHash = (node, active = true) => {
   return (req, res, next) => {
-    return this.requestQueue(node, req => `fileHash=${req.params.hash || req.body.hash}`, { 
+    return this.requestQueue(node, `fileHash=${req.params.hash || req.body.hash}`, { 
       limit: 1,
       fnCheck: () => !node.__isFsBlocked,
       active

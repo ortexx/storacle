@@ -20,7 +20,6 @@ module.exports = (Parent) => {
      */
     async init() {
       await super.init();
-      await this.initData();
     }
 
     /**
@@ -45,9 +44,10 @@ module.exports = (Parent) => {
     }
     
     /**
-     * @see Database.propotype.initData
+     * @see DatabaseLoki.propotype.initCollectionData
      */
-    async initData() {
+    async initCollectionData() {
+      await super.initCollectionData();
       const filesTotalSize = this.col.data.findOne({ name: 'filesTotalSize' });
       const filesCount = this.col.data.findOne({ name: 'filesCount' });
 
@@ -59,74 +59,6 @@ module.exports = (Parent) => {
         this.col.data.insert({ name: 'filesCount', value: 0 });
       }
     }
-
-    /**
-     * @see Database.propotype.setFilesTotalSize
-     */
-    async setFilesTotalSize(size) {
-      const filesTotalSize = this.col.data.findOne({ name: 'filesTotalSize' });
-      filesTotalSize.value = size;
-      this.col.data.update(filesTotalSize);
-    }
-    
-    /**
-     * @see Database.propotype.setFilesCount
-     */
-    async setFilesCount(count) {
-      const filesCount = this.col.data.findOne({ name: 'filesCount' });
-      filesCount.value = count;
-      this.col.data.update(filesCount);
-    }
-
-    /**
-     * @see Database.propotype.increaseFilesTotalSize
-     */
-    async increaseFilesTotalSize(size) {
-      const filesTotalSize = this.col.data.findOne({ name: 'filesTotalSize' });
-      filesTotalSize.value += size;
-      this.col.data.update(filesTotalSize);
-    }
-
-    /** 
-     * @see Database.propotype.decrementFilesTotalSize
-     */
-    async decreaseFilesTotalSize(size) {
-      const filesTotalSize = this.col.data.findOne({ name: 'filesTotalSize' });
-      filesTotalSize.value -= size;
-      this.col.data.update(filesTotalSize);
-    }
-
-    /**
-     * @see Database.propotype.increaseFilesCount
-     */
-    async increaseFilesCount() {
-      const filesCount = this.col.data.findOne({ name: 'filesCount' });
-      filesCount.value += 1;
-      this.col.data.update(filesCount);
-    }
-
-    /** 
-     * @see Database.propotype.decreaseFilesCount
-     */
-    async decreaseFilesCount() {
-      const filesCount = this.col.data.findOne({ name: 'filesCount' });
-      filesCount.value -= 1;
-      this.col.data.update(filesCount);
-    }
-
-    /** 
-     * @see Database.propotype.getFilesTotalSize
-     */
-    async getFilesTotalSize() {
-      return this.col.data.findOne({ name: 'filesTotalSize' }).value;
-    } 
-
-    /**
-     * @see Database.propotype.getFilesCount
-     */
-    async getFilesCount() {
-      return this.col.data.findOne({ name: 'filesCount' }).value;
-    } 
 
     /**
      * @see Database.propotype.getCache

@@ -143,7 +143,7 @@ module.exports = (Parent) => {
       }
 
       return _.merge(await super.getStatusInfo(pretty), storage, {
-        filesCount: await this.db.getFilesCount()
+        filesCount: await this.db.getData('filesCount')
       });
     }
 
@@ -152,8 +152,7 @@ module.exports = (Parent) => {
      * 
      * @async
      */
-    async calculateStorageInfo() {
-      this.initializationFilter();      
+    async calculateStorageInfo() {     
       const info = await utils.getDiskInfo(this.filesPath);
       const used = await this.getStorageTotalSize();    
       const tempDirInfo = await this.getTempDirInfo();
@@ -222,7 +221,7 @@ module.exports = (Parent) => {
     async getFileStoreCandidateFilterOptions(info) {
       return {
         fnCompare: await this.createCandidatesComparisonFunction('storeFile', (a, b) => b.free - a.free),
-        schema: { free: 1, isAvailable: true, isExistent: true },
+        schema: this.server.getFileStoreCandidateSlaveResponseSchema(),
         limit: await this.getFileDuplicatesCount(info)
       }
     }
@@ -237,8 +236,7 @@ module.exports = (Parent) => {
     async storeFile(file, options = {}) {
       const destroyFileStream = () => (file instanceof fs.ReadStream) && file.destroy();
 
-      try {
-        this.initializationFilter();        
+      try {      
         const timer = utils.getRequestTimer(options.timeout);
         const info = await utils.getFileInfo(file);
         
@@ -250,7 +248,8 @@ module.exports = (Parent) => {
           body: {
             info
           },
-          timeout: timer([this.getRequestMastersTimeout(), this.options.request.fileStoreTimeout])
+          timeout: timer([this.getRequestMastersTimeout(), this.options.request.fileStoreTimeout]),
+          responseSchema: this.server.getFileStoreCandidateMasterResponseSchema()
         });
         
         let existing = 0;
@@ -265,14 +264,14 @@ module.exports = (Parent) => {
 
         const filterOptions = await this.getFileStoreCandidateFilterOptions(info);
         filterOptions.limit = limit;
-        const candidates = this.filterCandidatesMatrix(results.map(r => r.candidates), filterOptions);
+        const candidates = await this.filterCandidatesMatrix(results.map(r => r.candidates), filterOptions);
 
         if(!candidates.length && !existing) {
           throw new errors.WorkError('Not found a suitable server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
         }
 
         if(candidates.length) {
-          await this.db.addCandidate(candidates[0].address, 'storeFile');
+          await this.db.addBehaviorCandidate(candidates[0].address, 'storeFile');
         }
         else {
           destroyFileStream();
@@ -349,10 +348,11 @@ module.exports = (Parent) => {
         servers.slice(1).forEach((val, i) => formData[`dublicates[${i}]`] = val);
 
         try {
-          result = await this.requestSlave(address, 'store-file/' + info.hash, {
+          result = await this.requestNode(address, 'store-file/' + info.hash, {
             formData,
             headers,
-            timeout: timer() || this.options.request.fileStoreTimeout
+            timeout: timer() || this.options.request.fileStoreTimeout,
+            responseSchema: this.server.getFileStoreResponseSchema()
           });
           break;
         }
@@ -373,14 +373,13 @@ module.exports = (Parent) => {
      * @param {object} [options]
      * @returns {string}
      */
-    async getFileLinks(hash, options = {}) {  
-      this.initializationFilter();
-
+    async getFileLinks(hash, options = {}) {
       let results = await this.requestMasters('get-file-links', {
         body: {
           hash
         },
-        timeout: options.timeout
+        timeout: options.timeout,
+        responseSchema: this.server.getFileLinksMasterResponseSchema()
       });
 
       let links = [];
@@ -435,9 +434,7 @@ module.exports = (Parent) => {
      * @param {object} [options]
      * @returns {string}
      */
-    async removeFile(hash, options = {}) {
-      this.initializationFilter();
-      
+    async removeFile(hash, options = {}) {      
       await this.requestMasters('remove-file', {
         body: {
           hash
@@ -455,7 +452,6 @@ module.exports = (Parent) => {
      * @param {string} info.hash
      */
     async getFileDuplicatesCount() {
-      this.initializationFilter();
       let dublicates = this.options.file.preferredDublicates;
       const networkSize = await this.getNetworkSize();
 
@@ -481,8 +477,6 @@ module.exports = (Parent) => {
      * @returns {object}
      */
     async getStorageInfo(data = {}) {
-      this.initializationFilter();
-
       data = Object.assign({
         total: true,
         available: true,
@@ -528,8 +522,6 @@ module.exports = (Parent) => {
      * @async
      */
     async cleanUpStorage() { 
-      this.initializationFilter();
-
       if(!this.storageAutoCleanSize) {
         return;
       }
@@ -599,7 +591,6 @@ module.exports = (Parent) => {
      * @async
      */
     async cleanUpTempDir() {
-      this.initializationFilter();
       const files = await fse.readdir(this.tempPath);
 
       for(let i = 0; i < files.length; i++) {
@@ -623,9 +614,7 @@ module.exports = (Parent) => {
      * 
      * @async
      */
-    async normalizeFilesInfo() { 
-      this.initializationFilter();
-
+    async normalizeFilesInfo() {
       if(this.__isFsBlocked) {
         throw new errors.WorkError('File system is not available now, please try later', 'ERR_STORACLE_FS_NOT_AVAILABLE');
       }
@@ -637,7 +626,7 @@ module.exports = (Parent) => {
         const files = await fse.readdir(dir);
 
         for(let i = 0; i < files.length; i++) {
-          const filePath = path.join(dir, files[i])
+          const filePath = path.join(dir, files[i]);
           const stat = await fse.stat(filePath);
 
           if(stat.isDirectory()) {
@@ -654,8 +643,8 @@ module.exports = (Parent) => {
 
       try {
         await walk(this.filesPath);
-        await this.db.setFilesTotalSize(size);
-        await this.db.setFilesCount(count);
+        await this.db.setData('filesTotalSize', size);
+        await this.db.setData('filesCount', count);
         this.__isFsBlocked = false;
         this.logger.info('Files info has been normalized'); 
       }
@@ -674,9 +663,7 @@ module.exports = (Parent) => {
      * @param {boolean} [options.strict] - all files must be exported or throw an error
      * @param {number} [options.timeout]
      */
-    async exportFiles(address, options = { strict: false }) {
-      this.initializationFilter(); 
-      
+    async exportFiles(address, options = { strict: false }) {      
       if(this.__isFsBlocked) {
         throw new errors.WorkError('File system is not available now, please try later', 'ERR_STORACLE_FS_NOT_AVAILABLE');
       }
@@ -717,7 +704,7 @@ module.exports = (Parent) => {
           try {
             file = fs.createReadStream(filePath);
 
-            await this.requestSlave(address, 'store-file', {
+            await this.requestNode(address, 'store-file', {
               formData: {
                 file: {
                   value: file,
@@ -727,7 +714,8 @@ module.exports = (Parent) => {
                   }
                 }
               },
-              timeout: timer() || this.options.request.fileStoreTimeout
+              timeout: timer() || this.options.request.fileStoreTimeout,
+              responseSchema: this.server.getFileStoreResponseSchema()
             });            
             success++;
             file.destroy();
@@ -777,7 +765,6 @@ module.exports = (Parent) => {
      * @param {string} hash 
      */
     async createFileLink(hash) {
-      this.initializationFilter();
       const info = await utils.getFileInfo(this.getFilePath(hash), { hash: false });
       return `${this.options.server.https? 'https': 'http'}://${this.address}/file/${hash}${info.ext? '.' + info.ext: ''}`;
     }  
@@ -789,8 +776,7 @@ module.exports = (Parent) => {
      * @param {string} hash
      * @returns {fs.ReadStream}
      */
-    async checkFile(hash) {
-      this.initializationFilter();    
+    async checkFile(hash) {    
       return await fse.pathExists(this.getFilePath(hash));
     }
 
@@ -803,8 +789,6 @@ module.exports = (Parent) => {
      * @returns {boolean}
      */
     async addFileToStorage(file, hash) {
-      this.initializationFilter();
-
       if(this.__isFsBlocked) {
         throw new errors.WorkError('File system is not available now, please try later', 'ERR_STORACLE_FS_NOT_AVAILABLE');
       }
@@ -816,8 +800,8 @@ module.exports = (Parent) => {
       try {
         await fse.ensureDir(dir);
         await fse.move(file.path, filePath, { overwrite: true });
-        await this.db.increaseFilesTotalSize(stat.size);
-        await this.db.increaseFilesCount();
+        await this.db.setData('filesTotalSize', row => row.value + stat.size);
+        await this.db.setData('filesCount', row => row.value + 1);
       }
       catch(err) {
         await this.normalizeDir(dir);
@@ -831,9 +815,7 @@ module.exports = (Parent) => {
      * @async
      * @param {string} hash
      */
-    async removeFileFromStorage(hash) {  
-      this.initializationFilter();
-      
+    async removeFileFromStorage(hash) {      
       if(this.__isFsBlocked) {
         throw new errors.WorkError('File system is not available now, please try later', 'ERR_STORACLE_FS_NOT_AVAILABLE');
       }
@@ -844,8 +826,8 @@ module.exports = (Parent) => {
 
       try {
         await fse.remove(filePath); 
-        await this.db.decreaseFilesTotalSize(stat.size);  
-        await this.db.decreaseFilesCount();
+        await this.db.setData('filesTotalSize', row => row.value - stat.size);
+        await this.db.setData('filesCount', row => row.value - 1);
         await this.normalizeDir(dir);
       }
       catch(err) {
@@ -860,7 +842,6 @@ module.exports = (Parent) => {
      * @param {string} dir 
      */
     async normalizeDir(dir) {
-      this.initializationFilter();
       const filesPath = path.normalize(this.filesPath);
 
       while(dir.length > filesPath.length) {
@@ -879,8 +860,7 @@ module.exports = (Parent) => {
      * @returns {integer}
      */
     async getStorageTotalSize() {
-      this.initializationFilter();
-      let filesSize = await this.db.getFilesTotalSize();
+      let filesSize = await this.db.getData('filesTotalSize');
       let foldersSize = 0;
 
       const walk = async (dir, level) => {
@@ -916,7 +896,6 @@ module.exports = (Parent) => {
      * @returns {integer}
      */
     async getTempDirInfo() {
-      this.initializationFilter();
       let size = 0;
       let count = 0;    
       const files = await fse.readdir(this.tempPath);
@@ -942,7 +921,6 @@ module.exports = (Parent) => {
      * @return {boolean}
      */
     async checkFileInfo() {
-      this.initializationFilter();
       try {
         await this.fileInfoFilter(...arguments);
         return true;
@@ -968,7 +946,6 @@ module.exports = (Parent) => {
      * @returns {boolean|string}
      */
     async fileInfoFilter(info = {}) {
-      this.initializationFilter();
       const mimeWhite = this.options.file.mimeTypeWhitelist || [];
       const mimeBlack = this.options.file.mimeTypBlacklist || [];
       const extWhite = this.options.file.extensionsWhitelist || [];
@@ -1097,7 +1074,6 @@ module.exports = (Parent) => {
      * @returns {string} 
      */
     getFilePath(hash) {
-      this.initializationFilter();
       const subs = [];
 
       for(let i = 0, o = 0; i < this.__dirNestingSize; i++, o += this.__dirNameLength) {

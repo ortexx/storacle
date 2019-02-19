@@ -30,8 +30,6 @@ module.exports = (Parent) => {
      * @returns {string}
      */
     async getFileLink(hash, options = {}) {
-      this.initializationFilter();
-
       return (await this.request('get-file-link', {
         body: {
           hash
@@ -50,8 +48,6 @@ module.exports = (Parent) => {
      * @returns {string}
      */
     async getFileLinks(hash, options = {}) {
-      this.initializationFilter();
-
       return (await this.request('get-file-links', {
         body: {
           hash
@@ -66,10 +62,9 @@ module.exports = (Parent) => {
      * 
      * @param {string} hash
      * @param {object} [options]
-     * @returns {Buffer} 
+     * @returns {Buffer}
      */
     async getFileToBuffer(hash, options = {}) {
-      this.initializationFilter();
       this.envFilter(false, 'getFileToBuffer');
       const timeout = options.timeout || this.options.request.clientTimeout;
       const timer = utils.getRequestTimer(timeout);
@@ -112,7 +107,6 @@ module.exports = (Parent) => {
      * @returns {Buffer} 
      */
     async getFileToPath(hash, path, options = {}) {
-      this.initializationFilter();
       this.envFilter(false, 'getFileToPath');
       const timeout = options.timeout || this.options.request.clientTimeout;
       const timer = utils.getRequestTimer(timeout);
@@ -154,7 +148,6 @@ module.exports = (Parent) => {
      * @returns {Blob} 
      */
     async getFileToBlob(hash, options = {}) {
-      this.initializationFilter();
       this.envFilter(true, 'getFileToBlob');
       const timeout = options.timeout || this.options.request.clientTimeout;
       const timer = utils.getRequestTimer(timeout);
@@ -188,7 +181,6 @@ module.exports = (Parent) => {
       const destroyFileStream = () => (fs.ReadStream && file instanceof fs.ReadStream) && file.destroy();
 
       try {
-        this.initializationFilter();
         const info = await utils.getFileInfo(file);
 
         if(typeof file == 'string') {
@@ -227,8 +219,6 @@ module.exports = (Parent) => {
      * @returns {string}
      */
     async removeFile(hash, options = {}) {
-      this.initializationFilter();
-
       await this.request('remove-file', {
         body: { hash },
         timeout: options.timeout,
@@ -240,7 +230,7 @@ module.exports = (Parent) => {
      * Create a deferred file link
      * 
      * @param {string} hash 
-     * @param {object} options 
+     * @param {object} optio ns 
      * @returns {string}
      */
     createRequestedFileLink(hash, options = {}) {
