@@ -1,6 +1,6 @@
 # [Storacle](https://github.com/ortexx/storacle/) [alpha]
 
-Storacle is a simple decentralized distributed file storage based on [spreadable](https://github.com/ortexx/spreadable/) protocol.
+Storacle is a decentralized file storage based on [spreadable](https://github.com/ortexx/spreadable/) protocol.
 
 ```javascript
 const Node = require('storacle').Node;

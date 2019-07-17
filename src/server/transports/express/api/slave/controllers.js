@@ -1,27 +1,7 @@
 const errors = require('../../../../../errors');
 
 /**
- * Get the file link info
- */
-module.exports.getFileLinkInfo = node => {
-  return async (req, res, next) => {
-    try {
-      const hash = req.body.hash;      
-
-      if(!hash) {
-        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
-      }
-
-      return res.send({ link: await node.checkFile(hash)? await node.createFileLink(hash): '' });     
-    }
-    catch(err) {
-      next(err);
-    }   
-  } 
-};
-
-/**
- * Get file store info
+ * Get the file store info
  */
 module.exports.getFileStoreInfo = node => {  
   return async (req, res, next) => {
@@ -34,13 +14,13 @@ module.exports.getFileStoreInfo = node => {
 
       if(!info.hash) {
         throw new errors.WorkError('"info.hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
-      }  
+      }
       
       const storage = await node.getStorageInfo({ tempUsed: false, tempFree: false });
       
       res.send({ 
         free: storage.free,
-        isExistent: await node.checkFile(info.hash),
+        isExistent: await node.hasFile(info.hash),
         isAvailable: info.size < storage.free && await node.checkFileInfo(info)
       });
     }
@@ -48,6 +28,26 @@ module.exports.getFileStoreInfo = node => {
       next(err);
     }    
   }
+};
+
+/**
+ * Get the file link info
+ */
+module.exports.getFileLinkInfo = node => {
+  return async (req, res, next) => {
+    try {
+      const hash = req.body.hash;      
+
+      if(!hash) {
+        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
+      }
+
+      return res.send({ link: await node.hasFile(hash)? await node.createFileLink(hash): '' });     
+    }
+    catch(err) {
+      next(err);
+    }   
+  } 
 };
 
 /**
@@ -61,12 +61,14 @@ module.exports.removeFile = node => {
       if(!hash) {
         throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
+      
+      const hasFile = await node.hasFile(hash);
 
-      if(await node.checkFile(hash)) {
+      if(hasFile) {
         await node.removeFileFromStorage(hash);
       }
 
-      res.send({ success: true });
+      res.send({ removed: hasFile });
     }
     catch(err) {
       next(err);

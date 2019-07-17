@@ -13,7 +13,7 @@ module.exports.file = node => {
       try {
         const hash = req.params.hash.split('.')[0];
         
-        if(!await node.checkFile(hash)) {
+        if(!await node.hasFile(hash)) {
           throw new errors.NotFoundError('File not found');
         }
 
@@ -66,18 +66,6 @@ module.exports.filesFormData = node => {
     formData.stream(),
     formData.union()
   ];
-};
-
-/**
- * Control file request's limit
- */
-module.exports.requestQueueFiles = node => {  
-  return (req, res, next) => {
-    return this.requestQueue(node, 'files', { 
-      limit: node.options.request.fileConcurrency,
-      fnCheck: () => !node.__isFsBlocked
-    })(req, res, next);
-  }
 };
 
 /**

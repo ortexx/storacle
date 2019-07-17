@@ -1,11 +1,13 @@
 const errors = require('../../../../../errors');
+const schema = require('../../../../../schema');
 
 /**
- * Get store candidates
+ * Get a candidate to store the file
  */
 module.exports.getFileStoreCandidate = node => {
   return async (req, res, next) => {
     try {
+      const timer = node.createRequestTimer(node.createRequestTimeout(req.body));
       const info = req.body.info || {};
 
       if(!info.size) {
@@ -14,13 +16,16 @@ module.exports.getFileStoreCandidate = node => {
 
       if(!info.hash) {
         throw new errors.WorkError('"info.hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
-      }  
-
-      const results = await node.requestSlaves('get-file-store-info', node.createRequestSlavesOptions(req.body, {
-        responseSchema: node.server.getFileStoreCandidateSlaveResponseSchema()
-      })); 
+      }
+      
+      const serverTimeout = node.getRequestServerTimeout();
+      const options = node.createRequestSlavesOptions(req.body, {
+        timeout: timer([serverTimeout, serverTimeout / 2]),
+        responseSchema: schema.getFileStoreCandidateSlaveResponse()
+      });
+      const results = await node.requestSlaves('get-file-store-info', options);      
       const existing = results.filter(c => c.isExistent).length;
-      const actual = results.filter(c => !c.isExistent && c.isAvailable);      
+      const actual = results.filter(c => !c.isExistent && c.isAvailable);
       const candidates = await node.filterCandidates(actual, await node.getFileStoreCandidateFilterOptions(info));
       res.send({ candidates, existing });
     }
@@ -36,17 +41,20 @@ module.exports.getFileStoreCandidate = node => {
 module.exports.getFileLinks = node => {
   return async (req, res, next) => {
     try {
-      const hash = req.body.hash;      
+      const timer = node.createRequestTimer(node.createRequestTimeout(req.body));
+      const hash = req.body.hash;
 
       if(!hash) {
         throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
-
-      const results = await node.requestSlaves('get-file-link-info', node.createRequestSlavesOptions(req.body, {
-        responseSchema: node.server.getFileLinksSlaveResponseSchema()
-      }));
-      let links = results.filter(r => node.isValidFileLink(r.link));
-      links.length > node.__maxCandidates && (links = links.slice(0, node.__maxCandidates));
+      
+      const serverTimeout = node.getRequestServerTimeout();
+      const options = node.createRequestSlavesOptions(req.body, {
+        timeout: timer([serverTimeout, serverTimeout / 2]),
+        responseSchema: schema.getFileLinksSlaveResponse()
+      });
+      const results = await node.requestSlaves('get-file-link-info', options);
+      const links = await node.filterCandidates(results, await node.getFileLinkCandidateFilterOptions()); 
       return res.send({ links });
     }
     catch(err) {
@@ -61,15 +69,20 @@ module.exports.getFileLinks = node => {
 module.exports.removeFile = node => {
   return async (req, res, next) => {
     try {
+      const timer = node.createRequestTimer(node.createRequestTimeout(req.body));
       const hash = req.body.hash;
       
       if(!hash) {
         throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
 
-      await node.requestSlaves('remove-file', node.createRequestSlavesOptions(req.body));
-
-      return res.send({ success: true });
+      const serverTimeout = node.getRequestServerTimeout();
+      const options = node.createRequestSlavesOptions(req.body, {
+        timeout: timer([serverTimeout, serverTimeout / 2]),
+        responseSchema: schema.removeFileSlaveResponse()
+      });
+      const results = await node.requestSlaves('remove-file', options);
+      return res.send({ removed: results.filter(item => item.removed).length });
     }
     catch(err) {
       next(err);

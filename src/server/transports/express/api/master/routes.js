@@ -3,7 +3,7 @@ const controllers = require('./controllers');
 
 module.exports = [
   /**
-   * Get a candidate to store file
+   * Get a candidate to store the file
    * 
    * @api {post} /api/master/get-file-store-candidate
    * @apiParam {object} info

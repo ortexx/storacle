@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const errors = require('../../../../errors');
 
 /**
@@ -8,6 +9,11 @@ module.exports.requestFile = node => {
   return async (req, res, next) => {
     try {
       const hash = req.params.hash;
+
+      if(!hash) {
+        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
+      }
+
       const link = await node.getFileLink(hash);
 
       if(!link) {
@@ -29,8 +35,12 @@ module.exports.storeFile = node => {
   return async (req, res, next) => {
     try {
       const file = req.body.file;
+
+      if(!(file instanceof fs.ReadStream)) {
+        throw new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
+      }
+
       const hash = await node.storeFile(file, {
-        disableConcurrencyControl: true,
         tempFile: path.basename(file.path),
         timeout: node.createRequestTimeout(req.body) 
       });
@@ -48,7 +58,14 @@ module.exports.storeFile = node => {
 module.exports.getFileLink = node => {
   return async (req, res, next) => {
     try {
-      res.send({ link: await node.getFileLink(req.body.hash, { timeout: node.createRequestTimeout(req.body) }) });
+      const hash = req.body.hash;
+
+      if(!hash) {
+        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
+      }
+
+      const link = await node.getFileLink(hash, { timeout: node.createRequestTimeout(req.body) })
+      res.send({ link });
     }
     catch(err) {
       next(err);
@@ -62,7 +79,14 @@ module.exports.getFileLink = node => {
 module.exports.getFileLinks = node => {
   return async (req, res, next) => {
     try {
-      res.send({ link: await node.getFileLinks(req.body.hash, { timeout: node.createRequestTimeout(req.body) }) });
+      const hash = req.body.hash;
+
+      if(!hash) {
+        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
+      }
+
+      const links = await node.getFileLinks(hash, { timeout: node.createRequestTimeout(req.body) });
+      res.send({ links });
     }
     catch(err) {
       next(err);
@@ -76,7 +100,13 @@ module.exports.getFileLinks = node => {
 module.exports.removeFile = node => {
   return async (req, res, next) => {
     try {
-      await node.removeFile(req.body.hash, { timeout: node.createRequestTimeout(req.body) });
+      const hash = req.body.hash;
+
+      if(!hash) {
+        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
+      }
+
+      await node.removeFile(hash, { timeout: node.createRequestTimeout(req.body) });
       res.send({ success: true });
     }
     catch(err) {

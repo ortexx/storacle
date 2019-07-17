@@ -11,11 +11,11 @@ module.exports.storeFile = node => {
     let file;
 
     try {
-      file = req.body.file;
+      file = req.body.file;      
       const dublicates = req.body.dublicates || [];
       const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
       
-      if(file && !(file instanceof fs.ReadStream)) {        
+      if(file && !(file instanceof fs.ReadStream)) {      
         if(!utils.isIpEqual(req.clientIp, node.ip)) {
           throw invalidFileErr;
         }
@@ -30,23 +30,23 @@ module.exports.storeFile = node => {
       
       if(!file || !(file instanceof fs.ReadStream)) {
         throw invalidFileErr;
-      }
-
+      } 
+      
       const info = await utils.getFileInfo(file); 
       await node.fileInfoFilter(info);
 
-      if(await node.checkFile(info.hash)) {
+      if(await node.hasFile(info.hash)) {
         file.destroy();
         return res.send({ hash: info.hash, link: await node.createFileLink(info.hash) });
       }
 
       const storage = await node.getStorageInfo({ free: true, tempUsed: false, tempFree: false });
-
+      
       if(info.size > storage.free) {
         throw new errors.WorkError('Not enough space to store', 'ERR_STORACLE_NOT_ENOUGH_PLACE');
       }
-
-      await node.addFileToStorage(file, info.hash);      
+      
+      await node.addFileToStorage(file, info.hash);   
       const link = await node.createFileLink(info.hash);
       file.destroy();
 
@@ -54,20 +54,19 @@ module.exports.storeFile = node => {
         file = fs.createReadStream(node.getFilePath(info.hash));
         
         node.duplicateFileForm(dublicates, file, info)
-          .then(() => {
-            file.destroy();
-            node.logger.info(`File ${info.hash} has been duplicate from ${node.address}`);
-          })
-          .catch((err) => {
-            file.destroy();
-            node.logger.error(err.stack);
-          });
-        }
+        .then(() => {
+          file.destroy();
+        })
+        .catch((err) => {
+          file.destroy();
+          node.logger.error(err.stack);
+        });
+      }
 
       res.send({ hash: info.hash, link});
     }
     catch(err) {
-      file.destroy();
+      file instanceof fs.ReadStream && file.destroy();
       next(err);
     }    
   }

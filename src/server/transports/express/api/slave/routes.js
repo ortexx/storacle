@@ -5,7 +5,7 @@ const midds = require('../../midds');
 
 module.exports = [
   /**
-   * Get file store info
+   * Get the file store info
    * 
    * @api {post} /api/slave/get-file-store-info
    * @apiParam {object} info

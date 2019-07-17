@@ -49,16 +49,14 @@ module.exports = (Parent) => {
      */
     async getFileLinks(hash, options = {}) {
       return (await this.request('get-file-links', {
-        body: {
-          hash
-        },
+        body: { hash },
         timeout: options.timeout,
         useInitialAddress: options.useInitialAddress
-      })).link;
+      })).links;
     }
 
     /**
-     * Get file to buffer
+     * Get the file to a buffer
      * 
      * @param {string} hash
      * @param {object} [options]
@@ -67,7 +65,7 @@ module.exports = (Parent) => {
     async getFileToBuffer(hash, options = {}) {
       this.envFilter(false, 'getFileToBuffer');
       const timeout = options.timeout || this.options.request.clientTimeout;
-      const timer = utils.getRequestTimer(timeout);
+      const timer = this.createRequestTimer(timeout);
 
       let result  = await this.request('get-file-link', {
         body: { hash },
@@ -88,7 +86,7 @@ module.exports = (Parent) => {
           const chunks = [];
           result.body
             .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))  
-            .on('data', chunk => chunks.push(chunk) )        
+            .on('data', chunk => chunks.push(chunk))
             .on('end', () => resolve(Buffer.concat(chunks)));
         }   
         catch(err) {
@@ -98,18 +96,17 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Get file and save to path
+     * Get the file and save it to the path
      * 
      * @async
      * @param {string} hash
      * @param {string} path
      * @param {object} [options]
-     * @returns {Buffer} 
      */
     async getFileToPath(hash, path, options = {}) {
       this.envFilter(false, 'getFileToPath');
       const timeout = options.timeout || this.options.request.clientTimeout;
-      const timer = utils.getRequestTimer(timeout);
+      const timer = this.createRequestTimer(timeout);
 
       let result  = await this.request('get-file-link', {
         body: { hash },
@@ -123,14 +120,13 @@ module.exports = (Parent) => {
 
       return await new Promise(async (resolve, reject) => {
         try { 
-          const ws = fs.createWriteStream(path);
           result = await fetch(result.link, this.createDefaultRequestOptions({
             method: 'GET',
             timeout: timer()
           }));
           result.body
             .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))
-            .pipe(ws)
+            .pipe(fs.createWriteStream(path))
             .on('error', reject)
             .on('finish', resolve);
         }   
@@ -141,7 +137,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Get file to blob
+     * Get file to a blob
      * 
      * @param {string} hash
      * @param {object} [options]
@@ -150,7 +146,7 @@ module.exports = (Parent) => {
     async getFileToBlob(hash, options = {}) {
       this.envFilter(true, 'getFileToBlob');
       const timeout = options.timeout || this.options.request.clientTimeout;
-      const timer = utils.getRequestTimer(timeout);
+      const timer = this.createRequestTimer(timeout);
 
       let result  = await this.request('get-file-link', {
         body: { hash },
@@ -186,7 +182,7 @@ module.exports = (Parent) => {
         if(typeof file == 'string') {
           file = fs.createReadStream(file);
         }
-        
+
         const result = await this.request('store-file', {
           formData: {
             file: {

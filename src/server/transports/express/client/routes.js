@@ -28,7 +28,6 @@ module.exports = [
     method: 'post',
     url: '/store-file', 
     fn: node => ([
-      midds.requestQueueFiles(node),
       midds.filesFormData(node), 
       controllers.storeFile(node)
     ]) 

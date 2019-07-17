@@ -1,15 +1,15 @@
 const path = require('path');
 const fs = require('fs');
 const fse = require('fs-extra');
-const urlib = require('url');
 const _ = require('lodash');
 const DatabaseSequelize = require('./db/transports/loki')();
 const ServerExpress = require('./server/transports/express')();
-const CacheDatabase = require('./cache/transports/database')();
+const CacheDatabase = require('spreadable/src/cache/transports/database')();
 const SplayTree = require('splaytree');
-const prettyBytes = require('pretty-bytes');
+const bytes = require('pretty-bytes');
 const utils = require('./utils');
 const errors = require('./errors');
+const schema = require('./schema');
 const Node = require('spreadable/src/node')();
 
 module.exports = (Parent) => {
@@ -17,23 +17,22 @@ module.exports = (Parent) => {
    * Class to manage the storacle node
    */
   return class NodeStoracle extends (Parent || Node) {
-    static get name () { return 'storacle' }
+    static get codename () { return 'storacle' }
     static get DatabaseTransport () { return DatabaseSequelize }
     static get ServerTransport () { return ServerExpress }
-    static get CacheTransport () { return CacheDatabase }
+    static get CacheFileTransport () { return CacheDatabase }
 
     /**
      * @see Node
      */
     constructor(options = {}) {
       options = _.merge({      
-        request: {
-          fileConcurrency: 30,    
+        request: { 
           fileGetTimeout: '2s',
-          fileStoreTimeout: '1h',
+          fileStoreTimeout: '1s',
           cacheTimeout: 250
         },
-        storage: {        
+        storage: {     
           autoCleanSize: 0,
           dataSize: '45%',
           tempSize: '45%',
@@ -47,15 +46,15 @@ module.exports = (Parent) => {
           mimeTypeWhitelist: [],
           mimeTypeBlacklist: [],
           extensionsWhitelist: [],
-          extensionsBlacklist: []
+          extensionsBlacklist: [],
+          linkCache: {
+            limit: 50000
+          }         
         },
         task: {
           cleanUpStorageInterval: '30s',
           cleanUpTempDirInterval: '20s',
           calculateStorageInfoInterval: '2s'
-        },
-        cache: {
-          limit: 50000
         }
       }, options);
 
@@ -65,22 +64,23 @@ module.exports = (Parent) => {
       this.storageTempSize = 0;
       this.storageAutoCleanSize = 0;
       this.fileMaxSize = 0;
+      this.CacheFileTransport = this.constructor.CacheFileTransport;
       this.__dirNestingSize = 2;
       this.__dirNameLength = 1;
       this.__requestQueueInterval = 10,
-      this.__isFsBlocked = false;
+      this.__isFsBlocked = false;      
     }    
 
     /**
      * @see Node.prototype.init
      */
     async init() {
-      this.storagePath = this.options.storagePath || path.join(process.cwd(), 'storacle', `storage-${this.port}`);
+      this.storagePath = this.options.storage.path || path.join(process.cwd(), 'storacle', `storage-${this.port}`);
       this.filesPath = path.join(this.storagePath, 'files');
       this.tempPath = path.join(this.storagePath, 'tmp');
       await fse.ensureDir(this.filesPath); 
       await fse.ensureDir(this.tempPath);
-      await super.init();     
+      await super.init();    
       await this.calculateStorageInfo();
     }
 
@@ -97,12 +97,25 @@ module.exports = (Parent) => {
      */
     async prepareServices() {
       await super.prepareServices();
-      this.options.cache && (this.cache = new this.CacheTransport(this, _.merge({}, this.options.cache)));      
 
-      if(this.task) {
-        this.task.add('cleanUpStorage', this.options.task.cleanUpStorageInterval, () => this.cleanUpStorage());
-        this.task.add('cleanUpTempDir', this.options.task.cleanUpTempDirInterval, () => this.cleanUpTempDir());
-        this.task.add('calculateStorageInfo', this.options.task.calculateStorageInfoInterval, () => this.calculateStorageInfo());
+      if(this.options.file.linkCache) {
+        this.cacheFile = new this.CacheFileTransport(this, 'file', this.options.file.linkCache);
+      }
+
+      if(!this.task) {
+        return;
+      }
+
+      if(this.options.task.cleanUpStorageInterval) {
+        await this.task.add('cleanUpStorage', this.options.task.cleanUpStorageInterval, () => this.cleanUpStorage());
+      }
+      
+      if(this.options.task.cleanUpTempDirInterval) {
+        await this.task.add('cleanUpTempDir', this.options.task.cleanUpTempDirInterval, () => this.cleanUpTempDir());
+      }
+      
+      if(this.options.task.calculateStorageInfoInterval) {
+        await this.task.add('calculateStorageInfo', this.options.task.calculateStorageInfoInterval, () => this.calculateStorageInfo());
       }
     }
 
@@ -111,7 +124,7 @@ module.exports = (Parent) => {
      */
     async initServices() {
       await super.initServices();
-      this.cache && await this.cache.init();
+      this.cacheFile && await this.cacheFile.init();
     }
 
     /**
@@ -119,7 +132,7 @@ module.exports = (Parent) => {
      */
     async deinitServices() {
       await super.deinitServices();
-      this.cache && await this.cache.deinit(); 
+      this.cacheFile && await this.cacheFile.deinit(); 
     }
 
     /**
@@ -127,7 +140,7 @@ module.exports = (Parent) => {
      */
     async destroyServices() {
       await super.destroyServices();
-      this.cache && await this.cache.destroy(); 
+      this.cacheFile && await this.cacheFile.destroy(); 
     }
 
     /**
@@ -138,7 +151,7 @@ module.exports = (Parent) => {
 
       if(pretty) {
         for(let key in storage) {
-          storage[key] = prettyBytes(storage[key]);
+          storage[key] = bytes(storage[key]);
         }
       }
 
@@ -165,7 +178,7 @@ module.exports = (Parent) => {
       if(typeof this.storageDataSize == 'string') {
         this.storageDataSize = Math.floor(available * parseFloat(this.storageDataSize) / 100);
       }
-
+      
       if(typeof this.storageTempSize == 'string') {
         this.storageTempSize = Math.floor(available * parseFloat(this.storageTempSize) / 100);
       }
@@ -174,14 +187,14 @@ module.exports = (Parent) => {
         this.storageDataSize = available;
         this.logger.warn(`"storage.dataSize" is greater than available disk space`);
       }
-
+      
       if(this.storageTempSize > available) {
         this.storageTempSize = available;
         this.logger.warn(`"storage.tempSize" is greater than available disk space`);
       }
-
+      
       const dev = (this.storageDataSize + this.storageTempSize) / available; 
-
+      
       if(dev > 1) {
         this.storageDataSize = Math.floor(this.storageDataSize / dev);
         this.storageTempSize =  Math.floor(this.storageTempSize / dev);
@@ -195,12 +208,12 @@ module.exports = (Parent) => {
       if(typeof this.fileMaxSize == 'string') {
         this.fileMaxSize = Math.floor(this.storageDataSize * parseFloat(this.fileMaxSize) / 100);
       }
-
+      
       if(this.storageAutoCleanSize > this.storageDataSize) {
         this.storageAutoCleanSize = this.storageDataSize;
         this.logger.warn(`"storage.autoCleanSize" is greater than "storage.dataSize"`);
       }
-
+      
       if(this.fileMaxSize > this.storageDataSize) {
         this.fileMaxSize = this.storageDataSize;
         this.logger.warn(`"file.maxSize" is greater than "storage.dataSize"`);
@@ -213,16 +226,29 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Get file store filter options
+     * Get the file storing filter options
      * 
      * @async
-     * @returns {object} - { [fnCompare], [schema], [limit] }
+     * @param {object} info
+     * @returns {object} - {}
      */
     async getFileStoreCandidateFilterOptions(info) {
       return {
         fnCompare: await this.createCandidatesComparisonFunction('storeFile', (a, b) => b.free - a.free),
-        schema: this.server.getFileStoreCandidateSlaveResponseSchema(),
+        schema: schema.getFileStoreCandidateSlaveResponse(),
         limit: await this.getFileDuplicatesCount(info)
+      }
+    }
+
+    /**
+     * Get the file link filter options
+     * 
+     * @async
+     * @returns {object} - {}
+     */
+    async getFileLinkCandidateFilterOptions() {
+      return {
+        fnFilter: item => utils.isValidFileLink(item.link)
       }
     }
 
@@ -234,10 +260,19 @@ module.exports = (Parent) => {
      * @param {object} [options]
      */
     async storeFile(file, options = {}) {
+      const timer = this.createRequestTimer(options.timeout);
       const destroyFileStream = () => (file instanceof fs.ReadStream) && file.destroy();
 
-      try {      
-        const timer = utils.getRequestTimer(options.timeout);
+      options = _.merge({
+        cache: true,
+        tempFile: ''
+      }, options);
+
+      try {
+        if(typeof file == 'string') {
+          file = fs.createReadStream(file);
+        }
+
         const info = await utils.getFileInfo(file);
         
         if(!info.size || !info.hash) {        
@@ -245,18 +280,15 @@ module.exports = (Parent) => {
         }
 
         let results = await this.requestMasters('get-file-store-candidate', {
-          body: {
-            info
-          },
+          body: { info },
           timeout: timer([this.getRequestMastersTimeout(), this.options.request.fileStoreTimeout]),
-          responseSchema: this.server.getFileStoreCandidateMasterResponseSchema()
+          responseSchema: schema.getFileStoreCandidateMasterResponse()
         });
-        
         let existing = 0;
         results.forEach(r => existing += r.existing);
         const dublicates = await this.getFileDuplicatesCount(info);
         const limit = dublicates - existing;
-
+        
         if(limit <= 0) {
           destroyFileStream();
           return info.hash;
@@ -265,19 +297,19 @@ module.exports = (Parent) => {
         const filterOptions = await this.getFileStoreCandidateFilterOptions(info);
         filterOptions.limit = limit;
         const candidates = await this.filterCandidatesMatrix(results.map(r => r.candidates), filterOptions);
-
+      
         if(!candidates.length && !existing) {
           throw new errors.WorkError('Not found a suitable server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
         }
 
         if(candidates.length) {
-          await this.db.addBehaviorCandidate(candidates[0].address, 'storeFile');
+          await this.db.addBehaviorCandidate('storeFile', candidates[0].address);
         }
         else {
           destroyFileStream();
           return info.hash;
         }
-
+        
         const servers = candidates.map(c => c.address).sort((a, b) => {
           if(a == this.address) {
             return -1;
@@ -289,10 +321,6 @@ module.exports = (Parent) => {
 
           return 0;
         });
-
-        if(typeof file == 'string') {
-          file = fs.createReadStream(file);
-        }
         
         const storeResult = await this.duplicateFileForm(servers, file, info, _.merge({}, options, { timeout: timer() }));
         
@@ -305,7 +333,10 @@ module.exports = (Parent) => {
           return info.hash;
         }
 
-        this.cache && await this.cache.set(storeResult.hash, { link: storeResult.link });   
+        if(this.cacheFile && options.cache && storeResult.address != this.address) {
+          await this.cacheFile.set(storeResult.hash, { link: storeResult.link }); 
+        }  
+
         destroyFileStream();  
         return storeResult.hash;
       }
@@ -316,7 +347,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Duplicate file
+     * Duplicate the file
      * 
      * @async
      * @param {string[]} servers 
@@ -324,19 +355,14 @@ module.exports = (Parent) => {
      * @param {object} options 
      */
     async duplicateFileForm(servers, file, info, options = {}) {
-      const timer = utils.getRequestTimer(options.timeout);
+      const timer = this.createRequestTimer(options.timeout);
       let result;
       
       while(servers.length) {
         const address = servers[0];
-        const headers = {};
-
-        if(options.disableConcurrencyControl) {
-          headers['disable-files-concurrency-control'] = true;
-        }
 
         const formData = _.merge({}, options.formData, {
-          file: (address == this.address && options.tempFile) || {
+          file: address == (this.address && options.tempFile) || {
             value: file,
             options: {
               filename: info.hash + (info.ext? '.' + info.ext: ''),
@@ -347,12 +373,11 @@ module.exports = (Parent) => {
         
         servers.slice(1).forEach((val, i) => formData[`dublicates[${i}]`] = val);
 
-        try {
+        try {          
           result = await this.requestNode(address, 'store-file/' + info.hash, {
             formData,
-            headers,
             timeout: timer() || this.options.request.fileStoreTimeout,
-            responseSchema: this.server.getFileStoreResponseSchema()
+            responseSchema: schema.getFileStoreResponse()
           });
           break;
         }
@@ -379,13 +404,12 @@ module.exports = (Parent) => {
           hash
         },
         timeout: options.timeout,
-        responseSchema: this.server.getFileLinksMasterResponseSchema()
+        responseSchema: schema.getFileLinksMasterResponse()
       });
 
-      let links = [];
-      results.forEach(r => links.length < this.__maxCandidates && (links = links.concat(r.links)));
-      links.length > this.__maxCandidates && (links = links.slice(0, this.__maxCandidates));
-      return links.filter(item => this.isValidFileLink(item.link)).map(item => item.link);
+      const filterOptions = await this.getFileLinkCandidateFilterOptions();
+      const links = await this.filterCandidatesMatrix(results.map(r => r.links), filterOptions);
+      return links.map(item => item.link);
     }
 
     /**
@@ -397,12 +421,16 @@ module.exports = (Parent) => {
      * @returns {string}
      */
     async getFileLink(hash, options = {}) {
-      if(await this.checkFile(hash)) {
+      options = _.merge({
+        cache: true
+      }, options);
+
+      if(await this.hasFile(hash)) {
         return await this.createFileLink(hash);
       }
 
-      if(this.cache) {
-        const cache = await this.cache.get(hash);
+      if(this.cacheFile && options.cache) {
+        const cache = await this.cacheFile.get(hash);
 
         if(cache) {
           const link = cache.value.link;
@@ -411,7 +439,7 @@ module.exports = (Parent) => {
             return link;
           }
           
-          await this.cache.remove(hash);
+          await this.cacheFile.remove(hash);
         }
       } 
 
@@ -419,7 +447,7 @@ module.exports = (Parent) => {
 
       if(links.length) {
         const link = utils.getRandomElement(links);
-        this.cache && await this.cache.set(hash, { link }); 
+        this.cacheFile && await this.cacheFile.set(hash, { link }); 
         return link;
       }
 
@@ -427,7 +455,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Remove file
+     * Remove the file
      * 
      * @async
      * @param {string} hash
@@ -439,38 +467,26 @@ module.exports = (Parent) => {
         body: {
           hash
         },
-        timeout: options.timeout
+        timeout: options.timeout,
+        responseSchema: schema.removeFileMasterResponse()
       });
     }
 
     /**
-     * Get file necessary duplicates count
+     * Get the file duplicates count
      * 
      * @async
      * @param {object} info 
      * @param {integer} info.size 
      * @param {string} info.hash
+     * @returns {number}
      */
     async getFileDuplicatesCount() {
-      let dublicates = this.options.file.preferredDublicates;
-      const networkSize = await this.getNetworkSize();
-
-      if(dublicates == 'auto') {
-        dublicates = Math.ceil(Math.sqrt(networkSize));
-      }
-      else if(typeof dublicates == 'string') {
-        dublicates = Math.ceil(networkSize * parseFloat(dublicates) / 100); 
-      }
-
-      if(dublicates > networkSize) {
-        dublicates = networkSize;
-      }
-
-      return dublicates;
+      return this.getValueGivenNetworkSize(this.options.file.preferredDublicates);
     }
 
     /**
-     * Get disk usage information
+     * Get the disk usage information
      * 
      * @async
      * @param {object} data
@@ -579,10 +595,8 @@ module.exports = (Parent) => {
       } 
 
       if((await this.getStorageInfo(storageInfoData)).free < this.storageAutoCleanSize) {
-        this.logger.error(`Unable to free up space on the disk completely`);
+        this.logger.error('Unable to free up space on the disk completely');
       }
-
-      this.logger.info(`Storage has been succesfully cleaned`);
     }
 
     /**
@@ -597,10 +611,11 @@ module.exports = (Parent) => {
         try {
           const filePath = path.join(this.tempPath, files[i]);
           const stat = await fse.stat(filePath);
-
+          
           if(Date.now() - stat.atimeMs <= this.options.storage.tempLifetime) {
             continue;
           }
+
           await fse.remove(filePath);
         }
         catch(err) {
@@ -610,7 +625,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Normalize files info
+     * Normalize the files info
      * 
      * @async
      */
@@ -620,7 +635,7 @@ module.exports = (Parent) => {
       }
 
       let size = 0;
-      let count = 0;      
+      let count = 0;
 
       const walk = async (dir) => {
         const files = await fse.readdir(dir);
@@ -655,22 +670,28 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Export files to other server
+     * Export the files to another server
      * 
      * @async
      * @param {string} address
      * @param {object} [options]
-     * @param {boolean} [options.strict] - all files must be exported or throw an error
+     * @param {boolean} [options.strict] - all files must be exported or to throw an error
+     * @param {boolean} [options.blockFileSystem] - block the file system before the exporting
      * @param {number} [options.timeout]
      */
-    async exportFiles(address, options = { strict: false }) {      
+    async exportFiles(address, options = {}) {  
+      options = _.merge({
+        strict: false,
+        blockFileSystem: true
+      }, options);
+
       if(this.__isFsBlocked) {
         throw new errors.WorkError('File system is not available now, please try later', 'ERR_STORACLE_FS_NOT_AVAILABLE');
       }
 
       let success = 0;
       let fail = 0;
-      const timer = utils.getRequestTimer(options.timeout);
+      const timer = this.createRequestTimer(options.timeout);
 
       await this.requestServer(address, `/ping`, {
         method: 'GET',
@@ -704,7 +725,7 @@ module.exports = (Parent) => {
           try {
             file = fs.createReadStream(filePath);
 
-            await this.requestNode(address, 'store-file', {
+            await this.requestNode(address, `store-file/${info.hash}`, {
               formData: {
                 file: {
                   value: file,
@@ -715,7 +736,7 @@ module.exports = (Parent) => {
                 }
               },
               timeout: timer() || this.options.request.fileStoreTimeout,
-              responseSchema: this.server.getFileStoreResponseSchema()
+              responseSchema: schema.getFileStoreResponse()
             });            
             success++;
             file.destroy();
@@ -735,7 +756,7 @@ module.exports = (Parent) => {
         }
       }
   
-      this.__isFsBlocked = true;
+      options.blockFileSystem && (this.__isFsBlocked = true);
   
       try {
         await walk(this.filesPath);
@@ -759,29 +780,29 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Create file link
+     * Create the file link
      * 
      * @async 
      * @param {string} hash 
      */
     async createFileLink(hash) {
       const info = await utils.getFileInfo(this.getFilePath(hash), { hash: false });
-      return `${this.options.server.https? 'https': 'http'}://${this.address}/file/${hash}${info.ext? '.' + info.ext: ''}`;
+      return `${this.getRequestProtocol()}://${this.address}/file/${hash}${info.ext? '.' + info.ext: ''}`;
     }  
   
     /**
-     * Check file info is available for this node
+     * Check the node has the file
      * 
      * @async
      * @param {string} hash
      * @returns {fs.ReadStream}
      */
-    async checkFile(hash) {    
+    async hasFile(hash) {
       return await fse.pathExists(this.getFilePath(hash));
     }
 
     /**
-     * Add file to the storage
+     * Add the file to the storage
      * 
      * @async
      * @param {fs.ReadStream} file
@@ -810,7 +831,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Remove file from the storage
+     * Remove the file from the storage
      * 
      * @async
      * @param {string} hash
@@ -853,8 +874,19 @@ module.exports = (Parent) => {
       }
     }
 
+    /**
+     * Empty the storage
+     * 
+     * @async
+     */
+    async emptyStorage() {
+      await fse.emptyDir(this.filesPath);
+      await this.db.setData('filesTotalSize', 0);
+      await this.db.setData('filesCount', 0);
+    }
+
     /** 
-     * Get storage total size
+     * Get the storage total size
      * 
      * @async
      * @returns {integer}
@@ -890,7 +922,7 @@ module.exports = (Parent) => {
     }
 
     /** 
-     * Get temp folder total size
+     * Get the temp folder total size
      * 
      * @async
      * @returns {integer}
@@ -935,7 +967,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Check file info is available for this node
+     * Check the file info is appropriate for the node
      * 
      * @async
      * @param {object} info
@@ -977,7 +1009,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Check cache link is available
+     * Check the cache link is available
      * 
      * @async
      * @param {string} link
@@ -1018,39 +1050,7 @@ module.exports = (Parent) => {
       const size = 1 - info.size / this.storageTempSize;
       const limit = 1 - info.count / this.options.storage.tempLimit;
       return (size + limit) / 2;
-    }
-    
-    /**
-     * Check the file link is valid
-     * 
-     * @param {string} link
-     * @returns {boolean}
-     */
-    isValidFileLink(link) {
-      if(typeof link != 'string') {
-        return false;
-      }
-
-      const info = urlib.parse(link);
-
-      if(!info.hostname || !utils.isValidHostname(info.hostname)) {
-        return false;
-      }
-
-      if(!info.port || !utils.isValidPort(info.port)) {
-        return false;
-      }
-      
-      if(!info.protocol.match(/^https?:?$/)) {
-        return false;
-      }
-      
-      if(!info.pathname || !info.pathname.match(/\/file\/[a-z0-9]+(\.[\w\d]+)*$/)) {
-        return false;
-      }
-
-      return true;
-    }
+    }    
  
     /**
      * Prepare the options
