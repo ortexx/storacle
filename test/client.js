@@ -30,10 +30,6 @@ describe('Client', () => {
     it('should not throw an exception', async function () {
       await client.init();
     });
-
-    it('should set the worker address', async function () {
-      assert.equal(client.workerAddress, node.address);
-    });
   });
 
   describe('.storeFile()', function () {

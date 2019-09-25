@@ -13,8 +13,10 @@ module.exports = (Parent) => {
     constructor(options = {}) {
       options = merge({
         request: {
-          fileStoreTimeout: '2h',
-          fileGetTimeout: '2s'
+          fileStoringTimeout: '2h',
+          fileGettingTimeout: '1h',
+          fileRemovalTimeout: '6s',          
+          fileLinkGettingTimeout: '6s'
         },
       }, options);
 
@@ -34,7 +36,7 @@ module.exports = (Parent) => {
         body: {
           hash
         },
-        timeout: options.timeout,
+        timeout: options.timeout || this.options.request.fileLinkGettingTimeout,
         useInitialAddress: options.useInitialAddress
       })).link;
     }
@@ -50,7 +52,7 @@ module.exports = (Parent) => {
     async getFileLinks(hash, options = {}) {
       return (await this.request('get-file-links', {
         body: { hash },
-        timeout: options.timeout,
+        timeout: options.timeout || this.options.request.fileLinkGettingTimeout,
         useInitialAddress: options.useInitialAddress
       })).links;
     }
@@ -63,31 +65,27 @@ module.exports = (Parent) => {
      * @returns {Buffer}
      */
     async getFileToBuffer(hash, options = {}) {
-      this.envFilter(false, 'getFileToBuffer');
-      const timeout = options.timeout || this.options.request.clientTimeout;
+      this.envTest(false, 'getFileToBuffer');
+      const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
 
       let result  = await this.request('get-file-link', {
         body: { hash },
-        timeout: timer([ timeout, this.options.request.fileGetTimeout ]),
+        timeout: timer([ this.options.request.fileLinkGettingTimeout ]),
         useInitialAddress: options.useInitialAddress
       });
-
+      
       if(!result.link) {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
       
       return await new Promise(async (resolve, reject) => {
         try {
-          result = await fetch(result.link, this.createDefaultRequestOptions({ 
-            method: 'GET',
-            timeout: timer()
-          }));
           const chunks = [];
-          result.body
-            .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))  
-            .on('data', chunk => chunks.push(chunk))
-            .on('end', () => resolve(Buffer.concat(chunks)));
+          (await fetch(result.link, this.createDefaultRequestOptions({ method: 'GET', timeout: timer() }))).body
+          .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))  
+          .on('data', chunk => chunks.push(chunk))
+          .on('end', () => resolve(Buffer.concat(chunks)));
         }   
         catch(err) {
           reject(err);
@@ -100,17 +98,17 @@ module.exports = (Parent) => {
      * 
      * @async
      * @param {string} hash
-     * @param {string} path
+     * @param {string} filePath
      * @param {object} [options]
      */
-    async getFileToPath(hash, path, options = {}) {
-      this.envFilter(false, 'getFileToPath');
-      const timeout = options.timeout || this.options.request.clientTimeout;
+    async getFileToPath(hash, filePath, options = {}) {
+      this.envTest(false, 'getFileToPath');
+      const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
 
       let result  = await this.request('get-file-link', {
         body: { hash },
-        timeout: timer([ timeout, this.options.request.fileGetTimeout ]),
+        timeout: timer([ this.options.request.fileLinkGettingTimeout ]),
         useInitialAddress: options.useInitialAddress
       });
 
@@ -120,15 +118,11 @@ module.exports = (Parent) => {
 
       return await new Promise(async (resolve, reject) => {
         try { 
-          result = await fetch(result.link, this.createDefaultRequestOptions({
-            method: 'GET',
-            timeout: timer()
-          }));
-          result.body
-            .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))
-            .pipe(fs.createWriteStream(path))
-            .on('error', reject)
-            .on('finish', resolve);
+          (await fetch(result.link, this.createDefaultRequestOptions({ method: 'GET', timeout: timer() }))).body
+          .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))
+          .pipe(fs.createWriteStream(filePath))
+          .on('error', reject)
+          .on('finish', resolve);
         }   
         catch(err) {
           reject(err);
@@ -144,13 +138,13 @@ module.exports = (Parent) => {
      * @returns {Blob} 
      */
     async getFileToBlob(hash, options = {}) {
-      this.envFilter(true, 'getFileToBlob');
-      const timeout = options.timeout || this.options.request.clientTimeout;
+      this.envTest(true, 'getFileToBlob');
+      const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
 
       let result  = await this.request('get-file-link', {
         body: { hash },
-        timeout: timer([ timeout, this.options.request.fileGetTimeout ]),
+        timeout: timer([ this.options.request.fileLinkGettingTimeout ]),
         useInitialAddress: options.useInitialAddress
       });
 
@@ -193,7 +187,7 @@ module.exports = (Parent) => {
               }
             }
           },
-          timeout: options.timeout || this.options.request.fileStoreTimeout,
+          timeout: options.timeout || this.options.request.fileStoringTimeout,
           useInitialAddress: options.useInitialAddress
         });
 
@@ -212,12 +206,12 @@ module.exports = (Parent) => {
      * @async
      * @param {string} hash
      * @param {object} [options]
-     * @returns {string}
+     * @returns {object}
      */
     async removeFile(hash, options = {}) {
-      await this.request('remove-file', {
+      return await this.request('remove-file', {
         body: { hash },
-        timeout: options.timeout,
+        timeout: options.timeout || this.options.request.fileRemovalTimeout,
         useInitialAddress: options.useInitialAddress
       });
     }
@@ -226,7 +220,7 @@ module.exports = (Parent) => {
      * Create a deferred file link
      * 
      * @param {string} hash 
-     * @param {object} optio ns 
+     * @param {object} options 
      * @returns {string}
      */
     createRequestedFileLink(hash, options = {}) {
@@ -238,8 +232,10 @@ module.exports = (Parent) => {
      */
     prepareOptions() {   
       super.prepareOptions();
-      this.options.request.fileGetTimeout = utils.getMs(this.options.request.fileGetTimeout);
-      this.options.request.fileStoreTimeout = utils.getMs(this.options.request.fileStoreTimeout);
+      this.options.request.fileGettingTimeout = utils.getMs(this.options.request.fileGettingTimeout);
+      this.options.request.fileStoringTimeout = utils.getMs(this.options.request.fileStoringTimeout);
+      this.options.request.fileRemovalTimeout = utils.getMs(this.options.request.fileRemovalTimeout);
+      this.options.request.fileLinkGettingTimeout = utils.getMs(this.options.request.fileLinkGettingTimeout);
     }
   }
 };

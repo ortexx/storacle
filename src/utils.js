@@ -5,6 +5,7 @@ const disk = require('diskusage');
 const fse = require('fs-extra');
 const fs = require('fs');
 const urlib = require('url');
+const errors = require('./errors');
 const utils = Object.assign({}, require('spreadable/src/utils'));
 
 /**
@@ -69,7 +70,7 @@ utils.getFileInfo = async function (file, data = {}) {
     data.hash && (info.hash = await this.getFileHash(file));
   }
   else {
-    throw new Error('Wrong file format');
+    throw new errors.WorkError('Wrong file format', 'ERR_STORACLE_WRONG_FILE');
   } 
 
   return info;
@@ -93,7 +94,7 @@ utils.getFileHash = async function (file) {
     return await hasha(file, { algorithm: 'md5' });
   }
 
-  throw new Error('Wrong file format');
+  throw new errors.WorkError('Wrong file format', 'ERR_STORACLE_WRONG_FILE');
 };
 
 /**
@@ -141,7 +142,7 @@ utils.blobToBuffer = async function (blob) {
     reader.addEventListener('loadend', fn);
     reader.readAsArrayBuffer(blob);
   });  
-}
+};
 
 /**
  * Check the file link is valid
@@ -173,6 +174,6 @@ utils.isValidFileLink = function (link) {
   }
 
   return true;
-}
+};
 
 module.exports = utils;

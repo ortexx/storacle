@@ -22,6 +22,7 @@ module.exports = [
    * 
    * @api {post} /client/store-file/
    * @apiParam {fs.ReadStream|string} file 
+   * @apiSuccess {object} - { hash: '' }
    */
   { 
     name: 'storeFile', 
@@ -38,6 +39,7 @@ module.exports = [
    * 
    * @api {post} /client/get-file-link
    * @apiParam {string} hash - file hash
+   * @apiSuccess {object} - { link: '' }
    */
   { 
     name: 'getFileLink', 
@@ -51,6 +53,7 @@ module.exports = [
    * 
    * @api {post} /client/get-file-links
    * @apiParam {string} hash - file hash
+   * @apiSuccess {object} - { links: [''] }
    */
   { 
     name: 'getFileLinks', 
@@ -64,6 +67,7 @@ module.exports = [
    * 
    * @api {post} /client/remove-file
    * @apiParam {string} hash - file hash
+   * @apiSuccess {object} - { removed: 0 }
    */
   { 
     name: 'removeFile',

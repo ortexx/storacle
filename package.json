@@ -1,13 +1,13 @@
 {
   "name": "storacle",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "bin": {
     "storacle": "./bin/index.js"
   },
   "author": {
-    "name": "Alexandr Balasyan",
+    "name": "Alexander Balasyan",
     "email": "mywebstreet@gmail.com"
   },
   "homepage": "https://github.com/ortexx/storacle",
@@ -43,7 +43,6 @@
     "babel-preset-env": "^1.7.0",
     "chai": "^4.2.0",
     "eslint": "^5.16.0",
-    "get-port": "^4.2.0",
     "husky": "^1.3.1",
     "mocha": "^5.2.0",
     "webpack": "^4.35.3",
@@ -53,7 +52,6 @@
     "chalk": "^2.4.1",
     "create-hash": "^1.2.0",
     "diskusage": "^0.2.6",
-    "express": "^4.17.1",
     "express-form-data": "^2.0.10",
     "fs-extra": "^7.0.1",
     "hasha": "^3.0.0",
@@ -64,7 +62,7 @@
     "optimist": "^0.6.1",
     "pretty-bytes": "^5.2.0",
     "splaytree": "^2.0.3",
-    "spreadable": ">=0.0.12"
+    "spreadable": ">=0.0.14"
   },
   "repository": {
     "type": "git",

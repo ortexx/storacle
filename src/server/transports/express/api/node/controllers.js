@@ -15,7 +15,7 @@ module.exports.storeFile = node => {
       const dublicates = req.body.dublicates || [];
       const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
       
-      if(file && !(file instanceof fs.ReadStream)) {      
+      if(file && !(file instanceof fs.ReadStream)) {  
         if(!utils.isIpEqual(req.clientIp, node.ip)) {
           throw invalidFileErr;
         }
@@ -33,17 +33,11 @@ module.exports.storeFile = node => {
       } 
       
       const info = await utils.getFileInfo(file); 
-      await node.fileInfoFilter(info);
+      await node.fileAvailabilityTest(info);
 
       if(await node.hasFile(info.hash)) {
         file.destroy();
         return res.send({ hash: info.hash, link: await node.createFileLink(info.hash) });
-      }
-
-      const storage = await node.getStorageInfo({ free: true, tempUsed: false, tempFree: false });
-      
-      if(info.size > storage.free) {
-        throw new errors.WorkError('Not enough space to store', 'ERR_STORACLE_NOT_ENOUGH_PLACE');
       }
       
       await node.addFileToStorage(file, info.hash);   
@@ -51,9 +45,8 @@ module.exports.storeFile = node => {
       file.destroy();
 
       if(dublicates.length) {
-        file = fs.createReadStream(node.getFilePath(info.hash));
-        
-        node.duplicateFileForm(dublicates, file, info)
+        file = fs.createReadStream(node.getFilePath(info.hash));        
+        node.duplicateFile(dublicates, file, info)
         .then(() => {
           file.destroy();
         })
@@ -63,7 +56,7 @@ module.exports.storeFile = node => {
         });
       }
 
-      res.send({ hash: info.hash, link});
+      res.send({ hash: info.hash, link });
     }
     catch(err) {
       file instanceof fs.ReadStream && file.destroy();

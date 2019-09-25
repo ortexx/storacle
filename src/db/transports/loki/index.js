@@ -1,5 +1,6 @@
 const DatabaseLoki = require('spreadable/src/db/transports/loki')();
 const path = require('path');
+const _ = require('lodash');
 
 module.exports = (Parent) => {
   /**
@@ -7,25 +8,18 @@ module.exports = (Parent) => {
    */
   return class DatabaseLokiStoracle extends (Parent || DatabaseLoki) {
     constructor(node, options = {}) {
-      if(!options.filename) {
-        options.filename = path.join(node.storagePath, 'loki.db')
-      }
+      options = _.merge({
+        filename: path.join(node.storagePath, 'loki.db')
+      }, options);
 
       super(node, options);
-    }
-
-    /**
-     * @see Database.prototype.init
-     */
-    async init() {
-      await super.init();
     }
     
     /**
      * @see DatabaseLoki.prototype.initCollectionData
      */
-    async initCollectionData() {
-      await super.initCollectionData();
+    initCollectionData() {
+      super.initCollectionData.apply(this, arguments);
       const filesTotalSize = this.col.data.findOne({ name: 'filesTotalSize' });
       const filesCount = this.col.data.findOne({ name: 'filesCount' });
 

@@ -182,22 +182,22 @@ describe('routes', () => {
     });
   });
 
-  describe('/api/master/get-file-store-candidate/', function () {
+  describe('/api/master/get-file-storing-candidates/', function () {
     it('should return an access error', async function () { 
-      const res = await fetch(`http://${node.address}/api/master/get-file-store-candidate/`, { method: 'post' });
+      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, { method: 'post' });
       assert.equal(await res.status, 403);
     });
 
     it('should return a master acception error', async function () { 
       const options = node.createDefaultRequestOptions();
-      const res = await fetch(`http://${node.address}/api/master/get-file-store-candidate/`, options);
+      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, options);
       assert.equal(await res.status, 422);
     });
 
     it('should return a data error', async function () { 
       const body = { ignoreAcception: true };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));  
-      const res = await fetch(`http://${node.address}/api/master/get-file-store-candidate/`, options);
+      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, options);
       assert.equal(res.status, 422);
     });
 
@@ -210,10 +210,10 @@ describe('routes', () => {
         }
       };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
-      const res = await fetch(`http://${node.address}/api/master/get-file-store-candidate/`, options);
+      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, options);
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
-        utils.validateSchema(schema.getFileStoreCandidateMasterResponse(), json);
+        utils.validateSchema(schema.getFileStoringCandidatesMasterResponse(), json);
       });
     });
   });
@@ -284,15 +284,15 @@ describe('routes', () => {
     });
   });
 
-  describe('/api/slave/get-file-store-info/', function () {
+  describe('/api/slave/get-file-storing-info/', function () {
     it('should return an access error', async function () { 
-      const res = await fetch(`http://${node.address}/api/slave/get-file-store-info/`, { method: 'post' });
+      const res = await fetch(`http://${node.address}/api/slave/get-file-storing-info/`, { method: 'post' });
       assert.equal(await res.status, 403);
     });
 
     it('should return a data error', async function () {
       const options = node.createDefaultRequestOptions();   
-      const res = await fetch(`http://${node.address}/api/slave/get-file-store-info/`, options);
+      const res = await fetch(`http://${node.address}/api/slave/get-file-storing-info/`, options);
       assert.equal(res.status, 422);
     });
 
@@ -305,10 +305,10 @@ describe('routes', () => {
         }
       };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
-      const res = await fetch(`http://${node.address}/api/slave/get-file-store-info/`, options);      
+      const res = await fetch(`http://${node.address}/api/slave/get-file-storing-info/`, options);      
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
-        utils.validateSchema(schema.getFileStoreCandidateSlaveResponse(), json);
+        utils.validateSchema(schema.getFileStoringInfoSlaveResponse(), json);
       });
     });
   });

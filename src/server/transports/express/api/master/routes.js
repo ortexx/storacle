@@ -3,19 +3,19 @@ const controllers = require('./controllers');
 
 module.exports = [
   /**
-   * Get a candidate to store the file
+   * Get candidates to store the file
    * 
-   * @api {post} /api/master/get-file-store-candidate
+   * @api {post} /api/master/get-file-storing-candidates
    * @apiParam {object} info
    * @apiParam {string} info.size
    * @apiParam {string} info.hash
    * @apiSuccess {object} - { candidates: ... }
    */
   { 
-    name: 'getFileStoreCandidate', 
+    name: 'getFileStorongCandidates', 
     method: 'post',
-    url: '/get-file-store-candidate', 
-    fn: controllers.getFileStoreCandidate
+    url: '/get-file-storing-candidates', 
+    fn: controllers.getFileStoringCandidates
   },
 
   /**

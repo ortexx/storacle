@@ -1,9 +1,9 @@
 const errors = require('../../../../../errors');
 
 /**
- * Get the file store info
+ * Get the file storing info
  */
-module.exports.getFileStoreInfo = node => {  
+module.exports.getFileStoringInfo = node => {  
   return async (req, res, next) => {
     try {
       const info = req.body.info || {};
@@ -16,12 +16,13 @@ module.exports.getFileStoreInfo = node => {
         throw new errors.WorkError('"info.hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
       
-      const storage = await node.getStorageInfo({ tempUsed: false, tempFree: false });
+      const testInfo = Object.assign({}, info)
+      testInfo.storage = await node.getStorageInfo({ tempUsed: false, tempFree: false });
       
       res.send({ 
-        free: storage.free,
-        isExistent: await node.hasFile(info.hash),
-        isAvailable: info.size < storage.free && await node.checkFileInfo(info)
+        free: testInfo.storage.free,
+        existenceInfo: await node.getFileExistenceInfo(testInfo),
+        isAvailable: await node.checkFileAvailability(testInfo)
       });
     }
     catch(err) {

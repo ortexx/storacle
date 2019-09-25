@@ -38,6 +38,22 @@ schema.getStatusPrettyResponse = function () {
   });
 };
 
+schema.getFileExistenceInfo = function() {
+  return {
+    type: 'object',
+    props: {
+      hash: 'string',
+      size: 'number',
+      mime: 'string',
+      ext: 'string',
+      storage: 'object'
+    },
+    required: ['hash', 'size'],
+    expected: true,
+    canBeNull: true
+  }
+};
+
 schema.getFileLink = function () {
   return {
     type: 'string',
@@ -57,29 +73,42 @@ schema.getFileStoreResponse = function () {
   }
 };
 
-schema.getFileStoreCandidateSlaveResponse = function () {
+schema.getFileStoringInfoSlaveResponse = function () {
   return {
     type: 'object',
     props: {
       address: this.getAddress(),
       free: 'number',
       isAvailable: 'boolean',
-      isExistent: 'boolean'
+      existenceInfo: this.getFileExistenceInfo()
     },
     strict: true
   }
 };
 
-schema.getFileStoreCandidateMasterResponse = function () {
+schema.getFileStoringCandidatesMasterResponse = function (options = {}) {
+  const address = this.getAddress();
+
   return {
     type: 'object',
     props: {
-      address: this.getAddress(),
+      address,
       candidates: {
         type: 'array',
-        items: this.getFileStoreCandidateSlaveResponse()
+        items: this.getFileStoringInfoSlaveResponse(),
+        maxLength: options.networkOptimum
       },
-      existing: 'number'
+      existing: {
+        type: 'array',
+        items: {
+          type: 'object',
+          props: {
+            address,
+            existenceInfo: this.getFileExistenceInfo() 
+          },
+          strict: true
+        }
+      }
     },
     strict: true
   }
@@ -96,14 +125,15 @@ schema.getFileLinksSlaveResponse = function () {
   }
 };
 
-schema.getFileLinksMasterResponse = function () {
+schema.getFileLinksMasterResponse = function (options = {}) {
   return {
     type: 'object',
     props: {
       address: this.getAddress(),
       links: {
         type: 'array',
-        items: this.getFileLinksSlaveResponse()
+        items: this.getFileLinksSlaveResponse(),
+        maxLength: options.networkOptimum
       }
     },
     strict: true

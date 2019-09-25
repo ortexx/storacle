@@ -20,7 +20,7 @@ tools.getStoragePath = function (port) {
  * @returns {object}
  */
 tools.createNodeOptions = async function (options = {}) {
-  options = await _tools.createNodeOptions(options);
+  options = await _tools.createNodeOptions(options); 
   delete options.db;
   options.storage = {
     path: this.getStoragePath(options.port)

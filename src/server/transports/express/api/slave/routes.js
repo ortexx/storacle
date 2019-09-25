@@ -5,19 +5,19 @@ const midds = require('../../midds');
 
 module.exports = [
   /**
-   * Get the file store info
+   * Get the file storing info
    * 
-   * @api {post} /api/slave/get-file-store-info
+   * @api {post} /api/slave/get-file-storing-info
    * @apiParam {object} info
    * @apiParam {string} info.size
    * @apiParam {string} info.hash
    * @apiSuccess {object} - { candidates: ... }
    */
   { 
-    name: 'getFileStoreInfo',
+    name: 'getFileStoringInfo',
     method: 'post',
-    url: '/get-file-store-info', 
-    fn: controllers.getFileStoreInfo
+    url: '/get-file-storing-info', 
+    fn: controllers.getFileStoringInfo
   },
   
   /**

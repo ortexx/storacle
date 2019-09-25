@@ -9,14 +9,14 @@ describe('group communication', () => {
   let client;
   let buffer;
   let dublicates;
-  let fileStoreTimeout;
+  let fileStoringNodeTimeout;
 
   before(async () => {
     nodes = [];
-    fileStoreTimeout = 800;
+    fileStoringNodeTimeout = 800;
 
     for(let i = 0; i < 4; i++) {
-      const node = new Node(await tools.createNodeOptions({ request: { fileStoreTimeout } }));
+      const node = new Node(await tools.createNodeOptions({ request: { fileStoringNodeTimeout } }));
       await node.init();
       nodes.push(node);
       node.initialNetworkAddress = nodes[0].address;
@@ -43,7 +43,7 @@ describe('group communication', () => {
 
   it('should store the file', async () => {
     const hash = await client.storeFile(buffer);       
-    await tools.wait(fileStoreTimeout);
+    await tools.wait(fileStoringNodeTimeout);
     let count = 0;
 
     for(let i = 0; i < nodes.length; i++) {
@@ -55,7 +55,7 @@ describe('group communication', () => {
 
   it('should not store the existent files again', async () => {
     const hash = await client.storeFile(buffer);    
-    await tools.wait(fileStoreTimeout);
+    await tools.wait(fileStoringNodeTimeout);
     let count = 0;
 
     for(let i = 0; i < nodes.length; i++) {
@@ -76,7 +76,7 @@ describe('group communication', () => {
     }
 
     await client.storeFile(buffer);
-    await tools.wait(fileStoreTimeout);
+    await tools.wait(fileStoringNodeTimeout);
     let count = 0;
 
     for(let i = 0; i < nodes.length; i++) {
@@ -114,7 +114,7 @@ describe('group communication', () => {
     }
 
     await Promise.all(p);
-    await tools.wait(fileStoreTimeout);
+    await tools.wait(fileStoringNodeTimeout);
 
     for(let i = 0; i < nodes.length; i++) {
       count += await nodes[i].db.getData('filesCount');

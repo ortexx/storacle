@@ -1,14 +1,14 @@
 const errors = require('../../../errors');
 const utils = require('../../../utils');
 const formData = require("express-form-data");
-Object.assign(module.exports, require("spreadable/src/server/transports/express/midds"));
+const midds = Object.assign({}, require("spreadable/src/server/transports/express/midds"));
 
 /**
  * Provide files receiving
  */
-module.exports.file = node => {
+midds.file = node => {
   return [
-    this.requestQueueFileHash(node, false),
+    midds.requestQueueFileHash(node, false),
     async (req, res, next) => {
       try {
         const hash = req.params.hash.split('.')[0];
@@ -35,7 +35,7 @@ module.exports.file = node => {
 /**
  * Provide files storing
  */
-module.exports.filesFormData = node => {  
+midds.filesFormData = node => {  
   return [
     async (req, res, next) => {
       try {
@@ -69,14 +69,16 @@ module.exports.filesFormData = node => {
 };
 
 /**
- * Control file request's limit by the file hash
+ * Control file requests limit by the file hash
  */
-module.exports.requestQueueFileHash = (node, active = true) => {
+midds.requestQueueFileHash = (node, active = true) => {
   return (req, res, next) => {
-    return this.requestQueue(node, `fileHash=${req.params.hash || req.body.hash}`, { 
+    return midds.requestQueue(node, `fileHash=${req.params.hash || req.body.hash}`, {
       limit: 1,
       fnCheck: () => !node.__isFsBlocked,
       active
     })(req, res, next);
   }
 };
+
+module.exports = midds;
