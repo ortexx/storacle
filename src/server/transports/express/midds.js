@@ -72,12 +72,14 @@ midds.filesFormData = node => {
  * Control file requests limit by the file hash
  */
 midds.requestQueueFileHash = (node, active = true) => {
+  const options = {
+    limit: 1,
+    fnCheck: () => !node.__isFsBlocked,
+    active
+  };
+
   return (req, res, next) => {
-    return midds.requestQueue(node, `fileHash=${req.params.hash || req.body.hash}`, {
-      limit: 1,
-      fnCheck: () => !node.__isFsBlocked,
-      active
-    })(req, res, next);
+    return midds.requestQueue(node, `fileHash=${req.params.hash || req.body.hash}`, options)(req, res, next);
   }
 };
 

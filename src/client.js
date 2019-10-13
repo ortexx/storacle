@@ -13,7 +13,7 @@ module.exports = (Parent) => {
     constructor(options = {}) {
       options = merge({
         request: {
-          fileStoringTimeout: '2h',
+          fileStoringTimeout: '2.05h',
           fileGettingTimeout: '1h',
           fileRemovalTimeout: '6s',          
           fileLinkGettingTimeout: '6s'
