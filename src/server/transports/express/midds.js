@@ -1,6 +1,8 @@
 const errors = require('../../../errors');
 const utils = require('../../../utils');
 const formData = require("express-form-data");
+const fs = require("fs");
+const path = require("path");
 const midds = Object.assign({}, require("spreadable/src/server/transports/express/midds"));
 
 /**
@@ -30,6 +32,44 @@ midds.file = node => {
       }
     }
   ]
+};
+
+/**
+ * Prepare file for storing
+ */
+midds.prepareFileToStore = node => {
+  return async (req, res, next) => {
+    let file;
+
+    try {
+      file = req.body.file;
+      const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
+      
+      if(file && !(file instanceof fs.ReadStream)) {  
+        if(!utils.isIpEqual(req.clientIp, node.ip)) {
+          throw invalidFileErr;
+        }
+
+        try {
+          file = fs.createReadStream(path.join(node.tempPath, file));
+        }
+        catch(err) {
+          throw invalidFileErr;
+        }
+      }
+
+      if(!file || !(file instanceof fs.ReadStream)) {
+        throw invalidFileErr;
+      } 
+
+      req.body.file = file;
+      next();
+    }
+    catch(err) {
+      file instanceof fs.ReadStream && file.destroy();
+      next(err);
+    }
+  }
 };
 
 /**

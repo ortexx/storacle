@@ -7,7 +7,7 @@ module.exports = [
   /**
    * Store the file
    * 
-   * @api {post} /api/node/store-file/
+   * @api {post} /api/node/store-file/:hash
    * @apiParam {fs.ReadStream|string} file
    */
   { 
@@ -17,6 +17,7 @@ module.exports = [
     fn: [
       midds.requestQueueFileHash,
       midds.filesFormData,
+      midds.prepareFileToStore,
       controllers.storeFile
     ]
   }

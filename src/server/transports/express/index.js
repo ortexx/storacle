@@ -1,55 +1,55 @@
 const ServerExpress = require('spreadable/src/server/transports/express')();
-const routes = require('spreadable/src/server/transports/express/routes');
-const routesClient = require('spreadable/src/server/transports/express/client/routes');
-const routesApi = require('spreadable/src/server/transports/express/api/routes');
-const routesApiMaster = require('spreadable/src/server/transports/express/api/master/routes');
-const routesApiSlave = require('spreadable/src/server/transports/express/api/slave/routes');
-const routesApiNode = require('spreadable/src/server/transports/express/api/node/routes');
+const routes = require('./routes');
+const routesClient = require('./client/routes');
+const routesApi = require('./api/routes');
+const routesApiMaster = require('./api/master/routes');
+const routesApiSlave = require('./api/slave/routes');
+const routesApiNode = require('./api/node/routes');
 
 module.exports = (Parent) => {
   return class ServerExpressStoracle extends (Parent || ServerExpress) {
     /**
-     * @see ServerExpress.prototype.getMainRouter
+     * @see ServerExpress.prototype.getMainRoutes
      */
-    getMainRouter() {
-      const arr = routes.slice();
-      arr.splice(routes.findIndex(r => r.name == 'ping'), 0, ...require('./routes'));
-      return this.createRouter(arr);
+    getMainRoutes() {
+      const arr = super.getMainRoutes();
+      arr.splice(arr.findIndex(r => r.name == 'ping'), 0, ...routes.slice());
+      return arr;
     }
   
     /**
-     * @see ServerExpress.prototype.getClientRouter
+     * @see ServerExpress.prototype.getClientRoutes
      */
-    getClientRouter() {
-      return this.createRouter(routesClient.concat(require('./client/routes')));
+    getClientRoutes() {
+      return super.getClientRoutes().concat(routesClient);
     }
   
     /**
-     * @see ServerExpress.prototype.getApiRouter
+     * @see ServerExpress.prototype.getApiRoutes
      */
-    getApiRouter() {
-      return this.createRouter(routesApi.concat(require('./api/routes')));
+    getApiRoutes() {
+      return super.getApiRoutes().concat(routesApi);
     }
   
     /**
-     * @see ServerExpress.prototype.getApiMasterRouter
+     * @see ServerExpress.prototype.getApiMasterRoutes
      */
-    getApiMasterRouter() {
-      return this.createRouter(routesApiMaster.concat(require('./api/master/routes')));
+    getApiMasterRoutes() {
+     return super.getApiMasterRoutes().concat(routesApiMaster);
     }
   
     /**
-     * @see ServerExpress.prototype.getApiSlaveRouter
+     * @see ServerExpress.prototype.getApiSlaveRoutes
      */
-    getApiSlaveRouter() {
-      return this.createRouter(routesApiSlave.concat(require('./api/slave/routes')));
+    getApiSlaveRoutes() {
+      return super.getApiSlaveRoutes().concat(routesApiSlave);
     }
 
     /**
-     * @see ServerExpress.prototype.getApiNodeRouter
+     * @see ServerExpress.prototype.getApiNodeRoutes
      */
-    getApiNodeRouter() {
-      return this.createRouter(routesApiNode.concat(require('./api/node/routes')));
+    getApiNodeRoutes() {
+      return super.getApiNodeRoutes().concat(routesApiNode);
     }
   }
 };

@@ -1,7 +1,6 @@
-const errors = require('../../../../../errors');
+
 const utils = require('../../../../../utils');
 const fs = require('fs');
-const path = require('path');
 
 /**
  * Store the file
@@ -12,26 +11,7 @@ module.exports.storeFile = node => {
 
     try {
       file = req.body.file;      
-      const dublicates = req.body.dublicates || [];
-      const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
-      
-      if(file && !(file instanceof fs.ReadStream)) {  
-        if(!utils.isIpEqual(req.clientIp, node.ip)) {
-          throw invalidFileErr;
-        }
-
-        try {
-          file = fs.createReadStream(path.join(node.tempPath, file));
-        }
-        catch(err) {
-          throw invalidFileErr;
-        }
-      }
-      
-      if(!file || !(file instanceof fs.ReadStream)) {
-        throw invalidFileErr;
-      } 
-      
+      const dublicates = req.body.dublicates || [];      
       const info = await utils.getFileInfo(file); 
       await node.fileAvailabilityTest(info);
 

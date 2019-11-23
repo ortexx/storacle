@@ -2,9 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const fse = require('fs-extra');
 const _ = require('lodash');
-const DatabaseLoki = require('./db/transports/loki')();
-const ServerExpress = require('./server/transports/express')();
-const CacheDatabase = require('spreadable/src/cache/transports/database')();
+const DatabaseLokiStoracle = require('./db/transports/loki')();
+const ServerExpressStoracle = require('./server/transports/express')();
+const CacheDatabaseStoracle = require('spreadable/src/cache/transports/database')();
 const SplayTree = require('splaytree');
 const bytes = require('pretty-bytes');
 const utils = require('./utils');
@@ -18,9 +18,9 @@ module.exports = (Parent) => {
    */
   return class NodeStoracle extends (Parent || Node) {
     static get codename () { return 'storacle' }
-    static get DatabaseTransport () { return DatabaseLoki }
-    static get ServerTransport () { return ServerExpress }
-    static get CacheFileTransport () { return CacheDatabase }
+    static get DatabaseTransport () { return DatabaseLokiStoracle }
+    static get ServerTransport () { return ServerExpressStoracle }
+    static get CacheFileTransport () { return CacheDatabaseStoracle }
 
     /**
      * @see Node
@@ -73,7 +73,7 @@ module.exports = (Parent) => {
      * @see Node.prototype.init
      */
     async init() {
-      this.storagePath = this.options.storage.path || path.join(process.cwd(), 'storacle', `storage-${this.port}`);
+      this.storagePath = this.options.storage.path || path.join(process.cwd(), this.constructor.codename, `storage-${this.port}`);
       this.filesPath = path.join(this.storagePath, 'files');
       this.tempPath = path.join(this.storagePath, 'tmp');
       await fse.ensureDir(this.filesPath); 
