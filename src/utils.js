@@ -1,6 +1,6 @@
 const mime = require('mime');
 const hasha = require('hasha');
-const mmm = require('mmmagic');
+const detectMime = require('detect-file-type');
 const disk = require('diskusage');
 const fse = require('fs-extra');
 const fs = require('fs');
@@ -106,14 +106,13 @@ utils.getFileHash = async function (file) {
  */
 utils.getFileMimeType = async function (content) {
   return await new Promise((resolve, reject) => {
-    const magic = new mmm.Magic(mmm.MAGIC_MIME_TYPE);
     content instanceof fs.ReadStream && (content = content.path);
-    magic[content instanceof Buffer? 'detect': 'detectFile'](content, (err, mime) => {
+    detectMime[content instanceof Buffer? 'fromBuffer': 'fromFile'](content, (err, result) => {
       if (err) {
         return reject(reject);
       }
 
-      resolve(mime);
+      resolve(result? result.mime: 'text/plain');
     });
   });    
 };
