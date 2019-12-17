@@ -45,7 +45,7 @@ midds.prepareFileToStore = node => {
       file = req.body.file;
       const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
       
-      if(file && !(file instanceof fs.ReadStream)) {  
+      if(file && !utils.isFileReadStream(file)) {  
         if(!utils.isIpEqual(req.clientIp, node.ip)) {
           throw invalidFileErr;
         }
@@ -58,7 +58,7 @@ midds.prepareFileToStore = node => {
         }
       }
 
-      if(!file || !(file instanceof fs.ReadStream)) {
+      if(!file || !utils.isFileReadStream(file)) {
         throw invalidFileErr;
       } 
 
@@ -66,7 +66,7 @@ midds.prepareFileToStore = node => {
       next();
     }
     catch(err) {
-      file instanceof fs.ReadStream && file.destroy();
+      utils.isFileReadStream(file) && file.destroy();
       next(err);
     }
   }
@@ -114,7 +114,6 @@ midds.filesFormData = node => {
 midds.requestQueueFileHash = (node, active = true) => {
   const options = {
     limit: 1,
-    fnCheck: () => !node.__isFsBlocked,
     active
   };
 

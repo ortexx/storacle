@@ -38,7 +38,9 @@ describe('Client', () => {
         await client.storeFile({});
         throw new Error('Fail');
       }
-      catch(err) {}
+      catch(err) {
+        assert.isOk(err.message.match('Wrong file'));
+      }
     });
 
     it('should store the file from a buffer', async () => {
@@ -91,7 +93,9 @@ describe('Client', () => {
         await client.getFileToBuffer('wrong');
         throw new Error('Fail');
       }
-      catch(err) {}    
+      catch(err) {
+        assert.isOk(err.message.match('Link for hash'));
+      }    
     });
 
     it('should return the buffer', async () => {
@@ -110,7 +114,9 @@ describe('Client', () => {
         await client.getFileToBuffer('wrong');
         throw new Error('Fail');
       }
-      catch(err) {}     
+      catch(err) {
+        assert.isOk(err.message.match('Link for hash'));
+      }     
     });
 
     it('should save the file', async () => {
@@ -125,16 +131,16 @@ describe('Client', () => {
   describe('.removeFile()', () => {
     it('should remove the file', async () => {
       const hash = await client.storeFile(Buffer.from('hello'));
-      await client.removeFile(hash);
-      assert.isFalse(await node.hasFile(hash));
+      const res = await client.removeFile(hash);
+      assert.equal(res.removed, 1, 'check the result');
+      assert.isFalse(await node.hasFile(hash), 'check the file');
     });
   });
 
   describe('.createRequestedFileLink()', () => {
     it('should return the right link', async () => {
       const hash = 'hash';
-      await client.removeFile(hash);
-      const link = client.createRequestedFileLink('hash');
+      const link = client.createRequestedFileLink(hash);
       assert.equal(link, `${client.getRequestProtocol()}://${client.workerAddress}/client/request-file/${hash}`);
     });
   });

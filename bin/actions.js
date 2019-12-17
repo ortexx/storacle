@@ -14,6 +14,15 @@ module.exports.normalizeFilesInfo = async node => {
 };
 
 /**
+ * Clean up the storage
+ */
+module.exports.cleanUpStorage = async node => {
+  await node.cleanUpStorage();
+  //eslint-disable-next-line no-console
+  console.log(chalk.cyan('The storage has been cleaned up'));
+};
+
+/**
  * Export the files to another node
  */
 module.exports.exportFiles = async node => {
@@ -38,7 +47,7 @@ module.exports.storeFile = async node => {
  */
 module.exports.getFileLink = async node => {
   const hash = argv.h || argv.hash;
-  const link = await node.getFileLink(argv.hash || argv.h);
+  const link = await node.getFileLink(hash);
 
   if(!link) {
     throw new Error(`There is no file with the hash ${hash}`);
@@ -49,12 +58,12 @@ module.exports.getFileLink = async node => {
 };
 
 /**
- * Get the file to path
+ * Get the file to the path
  */
 module.exports.getFileToPath = async node => {
   const hash = argv.h || argv.hash;
   const filePath = utils.getAbsolutePath(argv.filePath || argv.f);
-  const link = await node.getFileLink(argv.hash || argv.h);
+  const link = await node.getFileLink(hash);
 
   if(!link) {
     throw new Error(`There is no file with the hash ${hash}`);

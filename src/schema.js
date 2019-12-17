@@ -61,7 +61,7 @@ schema.getFileLink = function () {
   };
 };
 
-schema.getFileStoreResponse = function () {
+schema.getFileStoringResponse = function () {
   return {
     type: 'object',
     props: {
@@ -140,7 +140,7 @@ schema.getFileLinksMasterResponse = function (options = {}) {
   }
 };
 
-schema.removeFileMasterResponse = function () {
+schema.getFileRemovalMasterResponse = function () {
   return {
     type: 'object',
     props: {
@@ -151,7 +151,7 @@ schema.removeFileMasterResponse = function () {
   }
 };
 
-schema.removeFileSlaveResponse = function () {
+schema.getFileRemovalSlaveResponse = function () {
   return {
     type: 'object',
     props: {

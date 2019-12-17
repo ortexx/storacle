@@ -1,5 +1,3 @@
-
-
 const controllers = require('./controllers');
 const midds = require('../midds');
 
@@ -7,7 +5,7 @@ module.exports = [
   /**
    * Request the file
    * 
-   * @api {post} /client/request-file/:hash
+   * @api {get} /client/request-file/:hash
    * @apiParam {string} hash - file hash
    */
   { 

@@ -10,6 +10,9 @@ module.exports = (Parent) => {
    * Class to manage client requests to the network
    */
   return class ClientStoracle extends (Parent || Client) {
+    static get utils () { return utils }
+    static get errors () { return errors }
+    
     constructor(options = {}) {
       options = merge({
         request: {
@@ -33,9 +36,7 @@ module.exports = (Parent) => {
      */
     async getFileLink(hash, options = {}) {
       return (await this.request('get-file-link', {
-        body: {
-          hash
-        },
+        body: { hash },
         timeout: options.timeout || this.options.request.fileLinkGettingTimeout,
         useInitialAddress: options.useInitialAddress
       })).link;
@@ -115,7 +116,7 @@ module.exports = (Parent) => {
       if(!result.link) {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
-
+ 
       return await new Promise(async (resolve, reject) => {
         try { 
           (await fetch(result.link, this.createDefaultRequestOptions({ method: 'GET', timeout: timer() }))).body
@@ -168,7 +169,7 @@ module.exports = (Parent) => {
      * @param {object} [options]
      */
     async storeFile(file, options = {}) {
-      const destroyFileStream = () => (fs.ReadStream && file instanceof fs.ReadStream) && file.destroy();
+      const destroyFileStream = () => utils.isFileReadStream(file) && file.destroy();
 
       try {
         const info = await utils.getFileInfo(file);
@@ -201,7 +202,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Remove file
+     * Remove the file
      * 
      * @async
      * @param {string} hash

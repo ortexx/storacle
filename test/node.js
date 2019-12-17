@@ -1,6 +1,7 @@
 const assert = require('chai').assert;
 const fse = require('fs-extra');
 const path = require('path');
+const _ = require('lodash');
 const Node = require('../src/node')();
 const utils = require('../src/utils');
 const tools = require('./tools');
@@ -30,7 +31,7 @@ describe('Node', () => {
     let defaultOptions;
 
     before(async () => {
-      defaultOptions = node.options;
+      defaultOptions = _.merge({}, node.options);
       data = await node.getStorageInfo();
     });
 
@@ -128,7 +129,9 @@ describe('Node', () => {
         await node.storeFile({});
         throw new Error('Fail');
       }
-      catch(err) {}
+      catch(err) {
+        assert.isOk(err.message.match('Wrong file'));
+      }
     });
 
     it('should store the file from a buffer', async () => {
@@ -183,7 +186,7 @@ describe('Node', () => {
   });
 
   describe('.createFileLink()', () => {
-    it('should return true', async () => {
+    it('should create a right file link', async () => {
       const hash = await node.storeFile(Buffer.from('hello'));
       assert.equal(await node.createFileLink(hash), `http://${node.address}/file/${hash}.txt`);
     });
@@ -217,7 +220,8 @@ describe('Node', () => {
     it('should remove the file', async () => {
       const hash = await node.storeFile(Buffer.from('hello'));
       const filesCount = await node.db.getData('filesCount');
-      await node.removeFile(hash);
+      const res = await node.removeFile(hash);
+      assert.equal(res.removed, 1, 'check the result');
       assert.isFalse(await fse.exists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), filesCount - 1, 'check the count');
     });
@@ -263,7 +267,7 @@ describe('Node', () => {
     let dir;
     let hash;
 
-    it('shoud not remove the directory', async () => {
+    it('should not remove the directory', async () => {
       await node.emptyStorage();
       hash = await node.storeFile(Buffer.from('hello'));
       dir = path.dirname(node.getFilePath(hash));
@@ -271,7 +275,7 @@ describe('Node', () => {
       assert.isTrue(await fse.exists(dir));
     });
 
-    it('shoud remove the directory', async () => {
+    it('should remove the directory', async () => {
       await fse.remove(node.getFilePath(hash));
       await node.normalizeDir(dir);
       assert.isFalse(await fse.exists(dir), 'check the directory');
@@ -377,7 +381,7 @@ describe('Node', () => {
     let options;
 
     before(async () => {
-      options = node.options;
+      options = _.merge({}, node.options);
       await fse.emptyDir(node.tempPath);
     });
 
@@ -458,72 +462,106 @@ describe('Node', () => {
     let options;
 
     before(async () => {
-      options = node.options;
+      options = _.merge({}, node.options);
     });
 
     after(() => {
       node.options = options;
     });
 
-    it('shoud throw an error because of size', async () => {
+    it('should throw an error because of wrong size', async () => {
       try {
         await node.fileAvailabilityTest({ hash: '1' });
         throw new Error('Fail');
       } 
-      catch (err) {}
+      catch (err) {
+        assert.isOk(err.message.match('Wrong file'));
+      }
     });
 
-    it('shoud throw an error because of hash', async () => {
+    it('should throw an error because of storage size', async () => {
+      try {
+        await node.fileAvailabilityTest({ hash: '1', size: (await node.getStorageInfo()).free + 1 });
+        throw new Error('Fail');
+      } 
+      catch (err) {
+        assert.isOk(err.message.match('Not enough space'));
+      }
+    });
+
+    it('should throw an error because of max size', async () => {
+      try {
+        node.fileMaxSize = 1;
+        await node.fileAvailabilityTest({ hash: '1', size: node.fileMaxSize + 1 });        
+        throw new Error('Fail');
+      } 
+      catch (err) {
+        node.fileMaxSize = Infinity;
+        assert.isOk(err.message.match('too big'));
+      }
+    });
+
+    it('should throw an error because of hash', async () => {
       try {
         await node.fileAvailabilityTest({ size: 1 });
         throw new Error('Fail');
       } 
-      catch (err) {}
+      catch (err) {
+        assert.isOk(err.message.match('Wrong file'));
+      }
     });
 
-    it('shoud throw an error because of mime whitelist', async () => {
-      node.options.file.mimeTypeWhitelist = ['image/jpeg'];
+    it('should throw an error because of mime whitelist', async () => {
+      node.options.file.mimeWhitelist = ['image/jpeg'];
       
       try {
         await node.fileAvailabilityTest({ size: 1, hash: '1', mime: 'text/plain' });
         throw new Error('Fail');
       } 
-      catch (err) {}
+      catch (err) {        
+        assert.isOk(err.message.match('mime type'));        
+      }
     });
 
-    it('shoud throw an error because of mime blacklist', async () => {
-      node.options.file.mimeTypeBlacklist = ['image/jpeg'];
-      node.options.file.mimeTypeWhitelist = [];
+    it('should throw an error because of mime blacklist', async () => {
+      node.options.file.mimeBlacklist = ['image/jpeg'];
+      node.options.file.mimeWhitelist = [];
 
       try {
         await node.fileAvailabilityTest({ size: 1, hash: '1', mime: 'image/jpeg' });
         throw new Error('Fail');
       } 
-      catch (err) {}
+      catch (err) {
+        assert.isOk(err.message.match('mime type'));   
+      }
     });
 
-    it('shoud throw an error because of extension whitelist', async () => {
-      node.options.file.extTypeWhitelist = ['jpeg'];
+    it('should throw an error because of extension whitelist', async () => {
+      node.options.file.extWhitelist = ['jpeg'];
 
       try {
-        await node.fileAvailabilityTest({ size: 1, hash: '1', mime: 'txt' });
+        await node.fileAvailabilityTest({ size: 1, hash: '1', ext: 'txt' });
         throw new Error('Fail');
       } 
-      catch (err) {}
+      catch (err) {
+        assert.isOk(err.message.match('extension'));   
+      }
     });
 
-    it('shoud throw an error because of extension blacklist', async () => {      
-      node.options.file.extTypeBlacklist = ['jpeg'];
-      node.options.file.extTypeWhitelist = [];
+    it('should throw an error because of extension blacklist', async () => {      
+      node.options.file.extBlacklist = ['jpeg'];
+      node.options.file.extWhitelist = [];
 
       try {
-        await node.fileAvailabilityTest({ size: 1, hash: '1', mime: 'jpeg' });
+        await node.fileAvailabilityTest({ size: 1, hash: '1', ext: 'jpeg' });
         throw new Error('Fail');
       } 
-      catch (err) {}
+      catch (err) {
+        assert.isOk(err.message.match('extension'));  
+      }
     });
 
-    it('shoud not throw an error', async () => {
+    it('should not throw an error', async () => {
       await node.fileAvailabilityTest({ size: 1, hash: '1' });
       await node.fileAvailabilityTest({ size: 1, hash: '1', mime: 'audio/mpeg', ext: 'mp3' });
     });

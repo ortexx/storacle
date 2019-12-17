@@ -3,10 +3,20 @@ const hasha = require('hasha');
 const detectMime = require('detect-file-type');
 const disk = require('diskusage');
 const fse = require('fs-extra');
-const fs = require('fs');
+const stream = require('stream');
 const urlib = require('url');
 const errors = require('./errors');
 const utils = Object.assign({}, require('spreadable/src/utils'));
+
+/**
+ * Check the file is fs.ReadStream or fse.ReadStream
+ * 
+ * @param {*} obj
+ * @returns {boolean}
+ */
+utils.isFileReadStream = function (obj) {
+  return stream && typeof stream == 'function' && stream.Readable && (obj instanceof stream.Readable);
+};
 
 /**
  * Get the disk info
@@ -56,7 +66,7 @@ utils.getFileInfo = async function (file, data = {}) {
     (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
     data.hash && (info.hash = await this.getFileHash(file));
   }
-  else if(typeof fs == 'object' && ((file instanceof fs.ReadStream) || typeof file == 'string')) {
+  else if(this.isFileReadStream(file) || typeof file == 'string') {
     const filePath = file.path || file;
     data.size && (info.size = (await fse.stat(filePath)).size);
     data.mime && (info.mime = await this.getFileMimeType(filePath));
@@ -87,7 +97,7 @@ utils.getFileHash = async function (file) {
   if(typeof Blob == 'function' && file instanceof Blob) {
     return await hasha(await this.blobToBuffer(file), { algorithm: 'md5' });
   }
-  else if(typeof fs == 'object' && ((file instanceof fs.ReadStream) || typeof file == 'string')) {
+  else if(this.isFileReadStream(file) || typeof file == 'string') {
     return await hasha.fromFile(file.path || file, { algorithm: 'md5' });
   }
   else if(typeof Buffer == 'function' && (file instanceof Buffer)) {
@@ -106,7 +116,7 @@ utils.getFileHash = async function (file) {
  */
 utils.getFileMimeType = async function (content) {
   return await new Promise((resolve, reject) => {
-    content instanceof fs.ReadStream && (content = content.path);
+    this.isFileReadStream(content) && (content = content.path);
     detectMime[content instanceof Buffer? 'fromBuffer': 'fromFile'](content, (err, result) => {
       if (err) {
         return reject(reject);
@@ -147,9 +157,10 @@ utils.blobToBuffer = async function (blob) {
  * Check the file link is valid
  * 
  * @param {string} link
+ * @param {object} [options]
  * @returns {boolean}
  */
-utils.isValidFileLink = function (link) {
+utils.isValidFileLink = function (link, options = {}) {
   if(typeof link != 'string') {
     return false;
   }
@@ -168,7 +179,7 @@ utils.isValidFileLink = function (link) {
     return false;
   }
   
-  if(!info.pathname || !info.pathname.match(/\/file\/[a-z0-9]+(\.[\w\d]+)*$/)) {
+  if(!info.pathname || !info.pathname.match(new RegExp(`\\/${ options.action || 'file' }\\/[a-z0-9]+(\\.[\\w\\d]+)*$`))) {
     return false;
   }
 

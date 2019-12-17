@@ -1,4 +1,3 @@
-
 const controllers = require('./controllers');
 
 module.exports = [
@@ -12,7 +11,7 @@ module.exports = [
    * @apiSuccess {object} - { candidates: ... }
    */
   { 
-    name: 'getFileStorongCandidates', 
+    name: 'getFileStoringCandidates', 
     method: 'post',
     url: '/get-file-storing-candidates', 
     fn: controllers.getFileStoringCandidates

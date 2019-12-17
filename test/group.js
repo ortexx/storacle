@@ -8,7 +8,7 @@ describe('group communication', () => {
   let nodes;
   let client;
   let buffer;
-  let dublicates;
+  let duplicates;
   let fileStoringNodeTimeout;
 
   before(async () => {
@@ -26,7 +26,7 @@ describe('group communication', () => {
     await client.init();
     await tools.nodesSync(nodes, nodes.length * 2); 
     buffer = Buffer.from('hello');
-    dublicates = await nodes[0].getFileDuplicatesCount();
+    duplicates = await nodes[0].getFileDuplicatesCount();
   });
 
   after(async () => {
@@ -50,7 +50,7 @@ describe('group communication', () => {
       (await nodes[i].hasFile(hash)) && count++;
     }
     
-    assert.equal(count, dublicates);
+    assert.equal(count, duplicates);
   });
 
   it('should not store the existent files again', async () => {
@@ -62,10 +62,10 @@ describe('group communication', () => {
       (await nodes[i].hasFile(hash)) && count++;
     }
 
-    assert.equal(count, dublicates);
+    assert.equal(count, duplicates);
   });
 
-  it('should store the necessary count of dublicates', async () => {
+  it('should store the necessary count of duplicates', async () => {
     const hash = await utils.getFileHash(buffer);
 
     for(let i = 0; i < nodes.length; i++) {
@@ -83,13 +83,13 @@ describe('group communication', () => {
       (await nodes[i].hasFile(hash)) && count++;
     }
 
-    assert.equal(count, dublicates);
+    assert.equal(count, duplicates);
   });
 
   it('should return the right links', async () => {
     const hash = await utils.getFileHash(buffer);
     const links = await client.getFileLinks(hash);
-    assert.equal(links.length, dublicates);
+    assert.equal(links.length, duplicates);
   });
 
   it('should remove the file', async () => {
@@ -114,12 +114,12 @@ describe('group communication', () => {
     }
 
     await Promise.all(p);
-    await tools.wait(fileStoringNodeTimeout);
+    await tools.wait(fileStoringNodeTimeout * 2);
 
     for(let i = 0; i < nodes.length; i++) {
       count += await nodes[i].db.getData('filesCount');
     }
 
-    assert.isOk(count >= length * dublicates);
+    assert.isOk(count >= length * duplicates);
   });
 });

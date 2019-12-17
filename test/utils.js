@@ -18,9 +18,9 @@ describe('utils', () => {
     }); 
     
     it('should return false', () => {
-      assert.isFalse(utils.isValidFileLink('http://localhost/file/hash'), 'check without port');
-      assert.isFalse(utils.isValidFileLink('ftp://localhost/file/hash'), 'check wrong protocol');
-      assert.isFalse(utils.isValidFileLink('ftp://192:0.0.1:80/files/hash'), 'check wrong path');
+      assert.isFalse(utils.isValidFileLink('http://localhost/file/hash'), 'check without a port');
+      assert.isFalse(utils.isValidFileLink('ftp://localhost/file/hash'), 'check wrong a protocol');
+      assert.isFalse(utils.isValidFileLink('http://192:0.0.1:80/files/hash'), 'check the wrong path');
     });
   });
 

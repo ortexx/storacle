@@ -1,4 +1,4 @@
-const fs = require('fs');
+const utils = require('../../../../utils');
 const errors = require('../../../../errors');
 
 /**
@@ -35,7 +35,7 @@ module.exports.storeFile = node => {
     try {
       const file = req.body.file;
 
-      if(!(file instanceof fs.ReadStream)) {
+      if(!utils.isFileReadStream(file)) {
         throw new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
       }
 

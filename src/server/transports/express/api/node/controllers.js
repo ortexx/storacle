@@ -15,14 +15,12 @@ module.exports.storeFile = node => {
       const info = await utils.getFileInfo(file); 
       await node.fileAvailabilityTest(info);
 
-      if(await node.hasFile(info.hash)) {
-        file.destroy();
-        return res.send({ hash: info.hash, link: await node.createFileLink(info.hash) });
+      if(!await node.hasFile(info.hash)) {
+        await node.addFileToStorage(file, info.hash); 
       }
-      
-      await node.addFileToStorage(file, info.hash);   
-      const link = await node.createFileLink(info.hash);
+       
       file.destroy();
+      const link = await node.createFileLink(info.hash);      
 
       if(dublicates.length) {
         file = fs.createReadStream(node.getFilePath(info.hash));        
@@ -39,7 +37,7 @@ module.exports.storeFile = node => {
       res.send({ hash: info.hash, link });
     }
     catch(err) {
-      file instanceof fs.ReadStream && file.destroy();
+      utils.isFileReadStream(file) && file.destroy();
       next(err);
     }    
   }

@@ -177,8 +177,10 @@ describe('routes', () => {
     it('should remove the file', async function () {
       const hash = await node.storeFile(Buffer.from('hello')); 
       const options = client.createDefaultRequestOptions(tools.createJsonRequestOptions({ body: { hash } }));      
-      await fetch(`http://${node.address}/client/remove-file/`, options);
-      assert.isFalse(await node.hasFile(hash));
+      const res = await fetch(`http://${node.address}/client/remove-file/`, options);
+      const json = await res.json();
+      assert.equal(json.removed, 1, 'check the response');
+      assert.isFalse(await node.hasFile(hash), 'check the file');
     });
   });
 
@@ -279,7 +281,7 @@ describe('routes', () => {
       const res = await fetch(`http://${node.address}/api/master/remove-file/`, options);
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
-        utils.validateSchema(schema.removeFileMasterResponse(), json);
+        utils.validateSchema(schema.getFileRemovalMasterResponse(), json);
       });
     });
   });
@@ -372,7 +374,7 @@ describe('routes', () => {
       const res = await fetch(`http://${node.address}/api/slave/remove-file/`, options);
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
-        utils.validateSchema(schema.removeFileSlaveResponse(), json);
+        utils.validateSchema(schema.getFileRemovalSlaveResponse(), json);
       });
     });
   });
@@ -400,7 +402,7 @@ describe('routes', () => {
       const res = await fetch(`http://${node.address}/api/node/store-file/${hash}`, options);
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
-        utils.validateSchema(schema.getFileStoreResponse(), json);
+        utils.validateSchema(schema.getFileStoringResponse(), json);
       });
     });
 
@@ -414,7 +416,7 @@ describe('routes', () => {
       const res = await fetch(`http://${node.address}/api/node/store-file/${hash}`, options);
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
-        utils.validateSchema(schema.getFileStoreResponse(), json);
+        utils.validateSchema(schema.getFileStoringResponse(), json);
       });
     });
   });

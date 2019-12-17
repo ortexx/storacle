@@ -1,6 +1,5 @@
 const errors = require('../../../../../errors');
 const schema = require('../../../../../schema');
-const utils = require('../../../../../utils');
 const _ = require('lodash');
 
 /**
@@ -26,7 +25,7 @@ module.exports.getFileStoringCandidates = node => {
       });
       const results = await node.requestSlaves('get-file-storing-info', options);      
       const existing = results.filter(c => c.existenceInfo).map(c => _.pick(c, ['address', 'existenceInfo']));
-      const candidates = await node.filterCandidates(results, await node.getFileStoringCandidatesFilterOptions(info));
+      const candidates = await node.filterCandidates(results, await node.getFileStoringFilterOptions(info));
       res.send({ candidates, existing });
     }
     catch(err) {
@@ -52,8 +51,8 @@ module.exports.getFileLinks = node => {
         timeout: timer(),
         responseSchema: schema.getFileLinksSlaveResponse()
       });
-      let links = await node.requestSlaves('get-file-link-info', options);
-      links = links.filter(it => utils.isValidFileLink(it.link));
+      const results = await node.requestSlaves('get-file-link-info', options);
+      const links = await node.filterCandidates(results, await node.getFileLinksFilterOptions());
       return res.send({ links });
     }
     catch(err) {
@@ -77,7 +76,7 @@ module.exports.removeFile = node => {
       const timer = node.createRequestTimer(node.createRequestTimeout(req.body));
       const options = node.createRequestSlavesOptions(req.body, {
         timeout: timer(),
-        responseSchema: schema.removeFileSlaveResponse()
+        responseSchema: schema.getFileRemovalSlaveResponse()
       });
       const results = await node.requestSlaves('remove-file', options);
       return res.send({ removed: results.filter(item => item.removed).length });
