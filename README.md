@@ -53,7 +53,7 @@ const Client = require('storacle').Client;
 The example above shows the simplest use of the library. But the server can be flexibly configured.
 
 ## Browser client
-You can also use the client in a browser. Look at the description of the [spreadable](https://github.com/ortexx/spreadable/) library. In window you  have __window.ClientStoracle__ instead of __window.ClientSpreadable__. The prepared file name is __storacle.client.min.js__.
+You can also use the client in a browser. Look at the description of the [spreadable](https://github.com/ortexx/spreadable/) library. In window you  have __window.ClientStoracle__ instead of __window.ClientSpreadable__. The prepared file name is __storacle.client.js__.
 
 ## How it works
 

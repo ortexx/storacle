@@ -52,7 +52,7 @@ describe('Node', () => {
       assert.equal(node.fileMaxSize, node.options.file.maxSize, 'check "file.maxSize"');
     });
 
-    it('should define the necessary variables as expected using a percentage', async () => {
+    it('should define the necessary variables as expected using a percentage', async () => {      
       node.options.storage.dataSize = '50%';
       node.options.storage.tempSize = '50%';
       node.options.storage.autoCleanSize = '10%';

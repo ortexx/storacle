@@ -12,7 +12,10 @@ module.exports = [
     name: 'requestFile',
     method: 'get',
     url: '/request-file/:hash',
-    fn: controllers.requestFile
+    fn: [
+      midds.requestQueueClient,
+      controllers.requestFile
+    ]
   },
 
   /**
@@ -26,10 +29,11 @@ module.exports = [
     name: 'storeFile', 
     method: 'post',
     url: '/store-file', 
-    fn: node => ([
-      midds.filesFormData(node), 
-      controllers.storeFile(node)
-    ]) 
+    fn: [
+      midds.requestQueueClient,
+      midds.filesFormData, 
+      controllers.storeFile     
+    ]
   },
 
   /**
@@ -43,7 +47,10 @@ module.exports = [
     name: 'getFileLink', 
     method: 'post', 
     url: '/get-file-link',
-    fn: controllers.getFileLink
+    fn: [
+      midds.requestQueueClient,
+      controllers.getFileLink
+    ]
   },
 
   /**
@@ -57,7 +64,10 @@ module.exports = [
     name: 'getFileLinks', 
     method: 'post', 
     url: '/get-file-links',
-    fn: controllers.getFileLinks
+    fn: [
+      midds.requestQueueClient,
+      controllers.getFileLinks
+    ]
   },
 
   /**
@@ -71,6 +81,9 @@ module.exports = [
     name: 'removeFile',
     method: 'post', 
     url: '/remove-file',
-    fn: controllers.removeFile
+    fn: [
+      midds.requestQueueClient,
+      controllers.removeFile
+    ]
   }
 ];

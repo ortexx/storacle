@@ -26,20 +26,7 @@ utils.isFileReadStream = function (obj) {
  * @returns {object}
  */
 utils.getDiskInfo = async function (dir) {
-  return await new Promise((resolve, reject) => {
-    disk.check(dir, async (err, info) => {
-      if (err) {
-        return reject(err);
-      } 
-
-      try {
-        resolve(info);
-      }
-      catch(err) {
-        reject(err);
-      }        
-    });
-  });
+  return await disk.check(dir);
 };
 
 /**
