@@ -597,11 +597,13 @@ module.exports = (Parent) => {
      * Get the storage cleaning up tree
      * 
      * @async
-     * @returns {SplayTree}
+     * @returns {SplayTree} - node data must be like { size: 1, path: '' }
      */
     async getStorageCleaningUpTree() {
       const tree = new SplayTree((a, b) => a.atimeMs - b.atimeMs);
-      await this.iterateFiles((filePath, stat) => tree.insert({ size: stat.size, path: filePath, atimeMs: stat.atimeMs }));
+      await this.iterateFiles((filePath, stat) => {
+        tree.insert({ atimeMs: stat.atimeMs }, { size: stat.size, path: filePath });
+      });
       return tree;
     }
     
@@ -628,7 +630,7 @@ module.exports = (Parent) => {
       let node = tree.minNode();
 
       while(node) {
-        const obj = node.key;
+        const obj = node.data;
 
         try {
           await this.removeFileFromStorage(path.basename(obj.path));
