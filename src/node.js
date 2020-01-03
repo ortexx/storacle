@@ -592,6 +592,18 @@ module.exports = (Parent) => {
 
       await iterate(this.filesPath, 1);
     }
+
+    /**
+     * Get the storage cleaning up tree
+     * 
+     * @async
+     * @returns {SplayTree}
+     */
+    async getStorageCleaningUpTree() {
+      const tree = new SplayTree((a, b) => a.atimeMs - b.atimeMs);
+      await this.iterateFiles((filePath, stat) => tree.insert({ size: stat.size, path: filePath, atimeMs: stat.atimeMs }));
+      return tree;
+    }
     
     /**
      * Clean up the storage
@@ -612,15 +624,14 @@ module.exports = (Parent) => {
       }
       
       this.logger.info(`It is necessary to clean ${needSize} byte(s)`);
-      const tree = new SplayTree(((a, b) => a.atimeMs - b.atimeMs));
-      await this.iterateFiles((filePath, stat) => tree.insert({ size: stat.size, path: filePath, atimeMs: stat.atimeMs }));
-      let keys = tree.keys();
+      const tree = await this.getStorageCleaningUpTree();
+      let node = tree.minNode();
 
-      for(let i = 0; i < keys.length; i++) {
-        const data = keys[i];
+      while(node) {
+        const obj = node.key;
 
         try {
-          await this.removeFileFromStorage(path.basename(data.path));
+          await this.removeFileFromStorage(path.basename(obj.path));
 
           if((await this.getStorageInfo(storageInfoData)).free >= this.storageAutoCleanSize) {
             break;
@@ -629,7 +640,9 @@ module.exports = (Parent) => {
         catch(err) {
           this.logger.warn(err.stack);
         }
-      } 
+
+        node = tree.next(node);
+      }
 
       if((await this.getStorageInfo(storageInfoData)).free < this.storageAutoCleanSize) {
         this.logger.warn('Unable to free up space on the disk completely');
