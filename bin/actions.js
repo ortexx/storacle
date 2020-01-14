@@ -23,7 +23,7 @@ module.exports.cleanUpStorage = async node => {
 };
 
 /**
- * Export the files to another node
+ * Export files to another node
  */
 module.exports.exportFiles = async node => {
   await node.exportFiles(argv.address || argv.n);

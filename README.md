@@ -57,7 +57,7 @@ You can also use the client in a browser. Look at the description of the [spread
 
 ## How it works
 
-Nodes interact via the [spreadable](https://github.com/ortexx/spreadable/) mechanism. The file can be added to the network through any node. Files are saved entirely, not splitted into parts. After saving you get a hash of the file. With this hash you can later get it again, delete it or do something else. If possible links to files are cached, so if you work with the same file and in some other cases you will receive it immediately without re-traversing the network. For better reliability files can be duplicated. How exactly you can customize yourself. By default, each file tends to have its copies in amount of __Math.ceil(Math.sqrt(networkSize))__.
+Nodes interact via the [spreadable](https://github.com/ortexx/spreadable/) mechanism. The file can be added to the network through any node. Files are saved entirely, not splitted into parts. After saving you get a hash of the file. With this hash you can later get it again, delete it or do something else. If possible, links to files are cached so if you work with the same file and in some other cases you will receive it immediately without re-traversing the network. For better reliability files can be duplicated. How exactly you can customize yourself. By default, each file tends to have its copies in amount of __Math.ceil(Math.sqrt(networkSize))__.
 
 ## What are the limitations
 

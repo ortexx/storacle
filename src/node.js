@@ -697,13 +697,12 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Export the files to another server
+     * Export files to another server
      * 
      * @async
      * @param {string} address
      * @param {object} [options]
      * @param {boolean} [options.strict] - all files must be exported or to throw an error
-     * @param {boolean} [options.blockFileSystem] - block the file system before the exporting
      * @param {number} [options.timeout]
      */
     async exportFiles(address, options = {}) {  
@@ -727,23 +726,10 @@ module.exports = (Parent) => {
 
           try {
             file = fs.createReadStream(filePath);
-
-            await this.requestNode(address, `store-file/${info.hash}`, {
-              formData: {
-                file: {
-                  value: file,
-                  options: {
-                    filename: info.hash + (info.ext? '.' + info.ext: ''),
-                    contentType: info.mime
-                  }
-                }
-              },
-              timeout: timer() || this.options.request.fileStoringNodeTimeout,
-              responseSchema: schema.getFileStoringResponse()
-            });            
+            await this.duplicateFile([address], file, info, { timeout: timer() });                       
             success++;
             file.destroy();
-            this.logger.info(`File ${info.hash} has been exported`);
+            this.logger.info(`File "${info.hash}" has been exported`);
           }
           catch(err) {
             file.destroy();
@@ -754,7 +740,7 @@ module.exports = (Parent) => {
             
             fail++;
             this.logger.warn(err.stack);
-            this.logger.info(`File ${info.hash} has been failed`);
+            this.logger.info(`File "${info.hash}" has been failed`);
           }
         });
   
