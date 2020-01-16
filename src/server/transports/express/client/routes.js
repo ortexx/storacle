@@ -29,10 +29,10 @@ module.exports = [
     name: 'storeFile', 
     method: 'post',
     url: '/store-file', 
-    fn: [
-      midds.requestQueueClient,
-      midds.filesFormData, 
-      controllers.storeFile     
+    fn: (node) => [
+      midds.requestQueueClient(node, { limit: node.options.request.clientStoringConcurrency }),
+      midds.filesFormData(node), 
+      controllers.storeFile(node)   
     ]
   },
 

@@ -2,6 +2,7 @@ const path = require('path');
 const url = require('url');
 const fs = require('fs');
 const fse = require('fs-extra');
+const fetch = require('node-fetch');
 const _ = require('lodash');
 const SplayTree = require('splaytree');
 const bytes = require('pretty-bytes');
@@ -29,6 +30,7 @@ module.exports = (Parent) => {
     constructor(options = {}) {
       options = _.merge({      
         request: { 
+          clientStoringConcurrency: 20,
           fileStoringNodeTimeout: '2h',
           cacheTimeout: 250
         },
@@ -998,13 +1000,12 @@ module.exports = (Parent) => {
       }
 
       try {
-        await this.request({ 
-          method: 'HEAD', 
-          url: link,
-          timeout: this.options.request.cacheTimeout          
-        });
+        const res = await fetch(link, this.createDefaultRequestOptions({ 
+          method: 'HEAD',
+          timeout: this.options.request.cacheTimeout
+        }));
 
-        return true;
+        return res.status == 200;
       }
       catch(err) {
         return false;
