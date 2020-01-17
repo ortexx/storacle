@@ -1,5 +1,4 @@
 const merge = require('lodash/merge');
-const fetch = require('node-fetch');
 const Client = require('spreadable/src/client')();
 const fs = require('fs');
 const utils = require('./utils');
@@ -72,7 +71,7 @@ module.exports = (Parent) => {
 
       let result  = await this.request('get-file-link', {
         body: { hash },
-        timeout: timer([ this.options.request.fileLinkGettingTimeout ]),
+        timeout: timer(this.options.request.fileLinkGettingTimeout),
         useInitialAddress: options.useInitialAddress
       });
       
@@ -80,18 +79,7 @@ module.exports = (Parent) => {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
       
-      return await new Promise(async (resolve, reject) => {
-        try {
-          const chunks = [];
-          (await fetch(result.link, this.createDefaultRequestOptions({ method: 'GET', timeout: timer() }))).body
-          .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))  
-          .on('data', chunk => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)));
-        }   
-        catch(err) {
-          reject(err);
-        }  
-      });
+      return await utils.fetchFileToBuffer(result.link, this.createDefaultRequestOptions({ timeout: timer() }));
     }
 
     /**
@@ -109,7 +97,7 @@ module.exports = (Parent) => {
 
       let result  = await this.request('get-file-link', {
         body: { hash },
-        timeout: timer([ this.options.request.fileLinkGettingTimeout ]),
+        timeout: timer(this.options.request.fileLinkGettingTimeout),
         useInitialAddress: options.useInitialAddress
       });
 
@@ -117,18 +105,7 @@ module.exports = (Parent) => {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
  
-      return await new Promise(async (resolve, reject) => {
-        try { 
-          (await fetch(result.link, this.createDefaultRequestOptions({ method: 'GET', timeout: timer() }))).body
-          .on('error', (err) => reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err))
-          .pipe(fs.createWriteStream(filePath))
-          .on('error', reject)
-          .on('finish', resolve);
-        }   
-        catch(err) {
-          reject(err);
-        }  
-      });
+      await utils.fetchFileToPath(filePath, result.link, this.createDefaultRequestOptions({ timeout: timer() }));
     }
 
     /**
@@ -145,7 +122,7 @@ module.exports = (Parent) => {
 
       let result  = await this.request('get-file-link', {
         body: { hash },
-        timeout: timer([ this.options.request.fileLinkGettingTimeout ]),
+        timeout: timer(this.options.request.fileLinkGettingTimeout),
         useInitialAddress: options.useInitialAddress
       });
 
@@ -153,12 +130,7 @@ module.exports = (Parent) => {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
       
-      result = await fetch(result.link, this.createDefaultRequestOptions({
-        method: 'GET',
-        timeout: timer()
-      }));
-
-      return result.blob();
+      return await utils.fetchFileToBlob(result.link, this.createDefaultRequestOptions({ timeout: timer() }));
     }
 
     /**

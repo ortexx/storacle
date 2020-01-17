@@ -302,9 +302,13 @@ module.exports = (Parent) => {
           throw new errors.WorkError('This file cannot be added to the network', 'ERR_STORACLE_INVALID_FILE');
         }
 
+        const masterRequestTimeout = this.getRequestMastersTimeout(options);
         let results = await this.requestMasters('get-file-storing-candidates', {
           body: { info },
-          timeout: timer([this.getRequestMastersTimeout(options), this.options.request.fileStoringNodeTimeout]),
+          timeout: timer(
+            [masterRequestTimeout, this.options.request.fileStoringNodeTimeout],
+            { min: masterRequestTimeout, grabFree: true }
+          ),
           responseSchema: schema.getFileStoringCandidatesMasterResponse({ networkOptimum: await this.getNetworkOptimum() }),
           masterTimeout: options.masterTimeout,
           slaveTimeout: options.slaveTimeout
@@ -367,9 +371,8 @@ module.exports = (Parent) => {
      */
     async duplicateFile(servers, file, info, options = {}) {
       options = _.assign({
-        responseSchema: schema.getFileStoringResponse()
+        responseSchema: schema.getFileStoringResponse(),        
       }, options);
-      const formData = options.formData;
       let tempFile;
 
       if(utils.isFileReadStream(file)) {
@@ -377,18 +380,18 @@ module.exports = (Parent) => {
         await fse.exists(path.join(this.tempPath, name)) && (tempFile = name);         
       }
 
-      options.formData = address => {
-        return _.merge({}, formData, {
+      options.serverOptions = address => ({
+        timeout: this.options.request.fileStoringNodeTimeout,
+        formData: _.merge({}, options.formData, {
           file: address == (this.address && tempFile) || {
             value: file,
             options: {
               filename: info.hash + (info.ext? '.' + info.ext: ''),
               contentType: info.mime
             }
-          },
-          timeout: options.timeout || this.options.request.fileStoringNodeTimeout,
-        });
-      };
+          }          
+        })
+      });
 
       return await this.duplicateData(options.action || `store-file/${ info.hash }`, servers, options);
     }

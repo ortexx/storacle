@@ -1,7 +1,6 @@
 const chalk = require('chalk');
 const argv = require('optimist').argv;
-const fs = require('fs');
-const fetch = require('node-fetch');
+const srcUtils = require('../src/utils');
 const utils = require('./utils');
 
 /**
@@ -69,18 +68,7 @@ module.exports.getFileToPath = async node => {
     throw new Error(`There is no file with the hash ${hash}`);
   }
 
-  await new Promise(async (resolve, reject) => {
-    try { 
-      (await fetch(link, node.createDefaultRequestOptions({ method: 'GET' }))).body
-      .on('error', reject)
-      .pipe(fs.createWriteStream(filePath))
-      .on('error', reject)
-      .on('finish', resolve);
-    }   
-    catch(err) {
-      reject(err);
-    }  
-  });
+  await srcUtils.fetchFileToPath(filePath, link, node.createDefaultRequestOptions());
 
   //eslint-disable-next-line no-console
   console.log(chalk.cyan(`The file "${hash}" has been saved to "${filePath}"`));

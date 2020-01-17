@@ -4,9 +4,110 @@ const detectMime = require('detect-file-type');
 const disk = require('diskusage');
 const fse = require('fs-extra');
 const stream = require('stream');
+const fetch = require('node-fetch');
 const urlib = require('url');
+const fs = require('fs');
 const errors = require('./errors');
 const utils = Object.assign({}, require('spreadable/src/utils'));
+
+/**
+ * Fetch the file to a buffer
+ * 
+ * @async
+ * @param {string} link
+ * @param {object} [options]
+ * @returns {Buffer}
+ */
+utils.fetchFileToBuffer = async function (link, options = {}) {
+  options = Object.assign({ method: 'GET' }, options);
+ 
+  try { 
+    let result = await fetch(link, options);
+    return await result.buffer();
+  }
+  catch(err) {
+    throw utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err;
+  }
+};
+
+/**
+ * Fetch the file to a blob
+ * 
+ * @async
+ * @param {string} link
+ * @param {object} [options]
+ * @returns {Blob}
+ */
+utils.fetchFileToBlob = async function (link, options = {}) {
+  const controller = new AbortController();
+  options = Object.assign({ 
+    method: 'GET',
+    signal: controller.signal
+  }, options);
+  const timer = this.getRequestTimer(options.timeout);
+  let timeIsOver = false;
+
+  try {     
+    let result = await fetch(link, options);
+    let timeoutObj;
+    const timeout = timer();
+
+    if(timeout) {
+      timeoutObj = setTimeout(() => {
+        timeIsOver = true;
+        controller.abort();
+      }, timeout);
+    }
+    
+    const blob = await result.blob();
+    timeoutObj && clearTimeout(timeoutObj);
+    return blob;
+  }
+  catch(err) {
+    throw utils.isRequestTimeoutError(err) || timeIsOver? utils.createRequestTimeoutError(): err;
+  }
+};
+
+/**
+ * Fetch the file to the path
+ * 
+ * @async
+ * @param {string} filePath
+ * @param {string} link
+ * @param {object} [options]
+ */
+utils.fetchFileToPath = async function (filePath, link, options = {}) {
+  options = Object.assign({ method: 'GET' }, options);
+  const timer = this.getRequestTimer(options.timeout);
+
+  return await new Promise(async (resolve, reject) => {
+    try {       
+      let result = await fetch(link, options);
+      const stream = fs.createWriteStream(filePath);
+      const timeout = timer();
+      let timeIsOver = false;
+      let timeoutObj;
+
+      if(timeout) {
+        timeoutObj = setTimeout(() => {
+          timeIsOver = true;
+          stream.close();
+        }, timeout);
+      }
+      
+      result.body
+      .pipe(stream)
+      .on('error', reject)
+      .on('finish', () => {
+        clearTimeout(timeoutObj);
+        timeIsOver? reject(utils.createRequestTimeoutError()): resolve();
+      });
+    }   
+    catch(err) {
+      reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err);
+    }  
+  });
+};
 
 /**
  * Check the file is fs.ReadStream or fse.ReadStream
