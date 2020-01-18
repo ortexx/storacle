@@ -1008,7 +1008,7 @@ module.exports = (Parent) => {
           timeout: this.options.request.cacheTimeout
         }));
 
-        return res.status == 200;
+        return res.status >= 200 && res.status < 300;
       }
       catch(err) {
         return false;
