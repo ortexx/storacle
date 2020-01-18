@@ -13,7 +13,7 @@ module.exports = (Parent) => {
      */
     getMainRoutes() {
       const arr = super.getMainRoutes();
-      arr.splice(arr.findIndex(r => r.name == 'ping'), 0, ...routes.slice());
+      arr.splice(arr.findIndex(r => r.name == 'bodyParser'), 0, ...routes.slice());
       return arr;
     }
   

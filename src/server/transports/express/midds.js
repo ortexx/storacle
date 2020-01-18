@@ -25,7 +25,8 @@ midds.file = node => {
         info.mime && res.setHeader("Content-Type", info.mime);
         cache && res.set('Cache-Control', `public, max-age=${cache}`);
         res.setHeader("Content-Length", info.size);
-        res.sendFile(filePath);
+        const stream = fs.createReadStream(filePath);
+        stream.on('error', next).pipe(res);
       }
       catch(err) {
         next(err);
