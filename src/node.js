@@ -633,7 +633,7 @@ module.exports = (Parent) => {
       this.logger.info(`It is necessary to clean ${needSize} byte(s)`);
       const tree = await this.getStorageCleaningUpTree();
       let node = tree.minNode();
-
+      
       while(node) {
         const obj = node.data;
 
@@ -724,43 +724,38 @@ module.exports = (Parent) => {
         timeout: timer(this.options.request.pingTimeout) || this.options.request.pingTimeout
       });
   
-      try {
-        await this.iterateFiles(async (filePath) => {
-          const info = await utils.getFileInfo(filePath);
-          let file;
+      await this.iterateFiles(async (filePath) => {
+        const info = await utils.getFileInfo(filePath);
+        let file;
 
-          try {
-            file = fs.createReadStream(filePath);
-            await this.duplicateFile([address], file, info, { timeout: timer() });                       
-            success++;
-            file.destroy();
-            this.logger.info(`File "${info.hash}" has been exported`);
-          }
-          catch(err) {
-            file.destroy();
+        try {
+          file = fs.createReadStream(filePath);
+          await this.duplicateFile([address], file, info, { timeout: timer() });                       
+          success++;
+          file.destroy();
+          this.logger.info(`File "${info.hash}" has been exported`);
+        }
+        catch(err) {
+          file.destroy();
 
-            if(options.strict) {
-              throw err;
-            }
-            
-            fail++;
-            this.logger.warn(err.stack);
-            this.logger.info(`File "${info.hash}" has been failed`);
+          if(options.strict) {
+            throw err;
           }
-        });
-  
-        if(!success && !fail) {
-          this.logger.info(`There are not files to export`);
+          
+          fail++;
+          this.logger.warn(err.stack);
+          this.logger.info(`File "${info.hash}" has been failed`);
         }
-        else if(!fail) {
-          this.logger.info(`${success} file(s) have been exported`);
-        }
-        else {
-          this.logger.info(`${success} file(s) have been exported, ${fail} file(s) have been failed`);
-        }
+      });
+
+      if(!success && !fail) {
+        this.logger.info(`There are not files to export`);
       }
-      catch(err) {
-        throw err;
+      else if(!fail) {
+        this.logger.info(`${success} file(s) have been exported`);
+      }
+      else {
+        this.logger.info(`${success} file(s) have been exported, ${fail} file(s) have been failed`);
       }
     }
 
