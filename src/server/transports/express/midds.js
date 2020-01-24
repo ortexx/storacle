@@ -9,30 +9,27 @@ const midds = Object.assign({}, require("spreadable/src/server/transports/expres
  * Provide files receiving
  */
 midds.file = node => {
-  return [
-    midds.requestQueueFileHash(node, false),
-    async (req, res, next) => {
-      try {
-        const hash = req.params.hash.split('.')[0];
-        
-        if(!await node.hasFile(hash)) {
-          throw new errors.NotFoundError('File not found');
-        }
+  return async (req, res, next) => {
+    try {
+      const hash = req.params.hash.split('.')[0];
+      
+      if(!await node.hasFile(hash)) {
+        throw new errors.NotFoundError('File not found');
+      }
 
-        const cache = Math.ceil(node.options.file.responseCacheLifetime / 1000);
-        const filePath = await node.getFilePath(hash);
-        const info = await utils.getFileInfo(filePath, { hash: false });
-        info.mime && res.setHeader("Content-Type", info.mime);
-        cache && res.set('Cache-Control', `public, max-age=${cache}`);
-        res.setHeader("Content-Length", info.size);
-        const stream = fs.createReadStream(filePath);
-        stream.on('error', next).pipe(res);
-      }
-      catch(err) {
-        next(err);
-      }
+      const cache = Math.ceil(node.options.file.responseCacheLifetime / 1000);
+      const filePath = await node.getFilePath(hash);
+      const info = await utils.getFileInfo(filePath, { hash: false });
+      info.mime && res.setHeader("Content-Type", info.mime);
+      cache && res.set('Cache-Control', `public, max-age=${cache}`);
+      res.setHeader("Content-Length", info.size);
+      const stream = fs.createReadStream(filePath);
+      stream.on('error', next).pipe(res);
     }
-  ]
+    catch(err) {
+      next(err);
+    }
+  }
 };
 
 /**
