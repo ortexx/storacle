@@ -288,10 +288,6 @@ module.exports = (Parent) => {
       try {
         const timer = this.createRequestTimer(options.timeout);
 
-        options = _.merge({
-          cache: true,
-        }, options);
-
         if(typeof file == 'string') {
           file = fs.createReadStream(file);
         }
@@ -338,7 +334,8 @@ module.exports = (Parent) => {
         }
         
         const servers = candidates.map(c => c.address).sort(await this.createAddressComparisonFunction());    
-        const result = await this.duplicateFile(servers, file, info, { timeout: timer() });
+        const dupOptions = Object.assign({}, options, { timeout: timer() });
+        const result = await this.duplicateFile(servers, file, info, dupOptions);
 
         if(!result && !existing.length) {
           throw new errors.WorkError('Not found an available server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
@@ -348,8 +345,7 @@ module.exports = (Parent) => {
           destroyFileStream();
           return info.hash;
         }
-
-        options.cache && await this.updateFileCache(result.hash, { link: result.link });
+        
         destroyFileStream();
         return result.hash;
       }
@@ -371,7 +367,8 @@ module.exports = (Parent) => {
      */
     async duplicateFile(servers, file, info, options = {}) {
       options = _.assign({
-        responseSchema: schema.getFileStoringResponse(),        
+        responseSchema: schema.getFileStoringResponse(),  
+        cache: true      
       }, options);
       let tempFile;
 
@@ -393,7 +390,9 @@ module.exports = (Parent) => {
         })
       });
 
-      return await this.duplicateData(options.action || `store-file/${ info.hash }`, servers, options);
+      const result = await this.duplicateData(options.action || `store-file/${ info.hash }`, servers, options);
+      result && options.cache && await this.updateFileCache(result.hash, { link: result.link });
+      return result;
     }
     
     /**
