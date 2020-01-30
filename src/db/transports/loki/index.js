@@ -1,20 +1,10 @@
 const DatabaseLoki = require('spreadable/src/db/transports/loki')();
-const path = require('path');
-const _ = require('lodash');
 
 module.exports = (Parent) => {
   /**
    * Lokijs storacle database transport
    */
-  return class DatabaseLokiStoracle extends (Parent || DatabaseLoki) {
-    constructor(node, options = {}) {
-      options = _.merge({
-        filename: path.join(node.storagePath, 'loki.db')
-      }, options);
-
-      super(node, options);
-    }
-    
+  return class DatabaseLokiStoracle extends (Parent || DatabaseLoki) {    
     /**
      * @see DatabaseLoki.prototype.initCollectionData
      */

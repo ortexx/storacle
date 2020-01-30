@@ -69,21 +69,19 @@ module.exports = (Parent) => {
       this.fileMaxSize = 0;
       this.CacheFileTransport = this.constructor.CacheFileTransport;
       this.__dirNestingSize = 2;
-      this.__dirNameLength = 1;  
+      this.__dirNameLength = 1;
       this.__blockedFiles = {};
-      this.__fileBlockInterval = 10;
     }    
 
     /**
      * @see Node.prototype.init
      */
-    async init() {
-      this.storagePath = this.options.storage.path || path.join(process.cwd(), this.constructor.codename, `storage-${this.port}`);
+    async init() {      
+      await super.init.apply(this, arguments); 
       this.filesPath = path.join(this.storagePath, 'files');
       this.tempPath = path.join(this.storagePath, 'tmp');
       await fse.ensureDir(this.filesPath); 
       await fse.ensureDir(this.tempPath);
-      await super.init.apply(this, arguments);    
       await this.calculateStorageInfo();
     }
 
@@ -790,25 +788,23 @@ module.exports = (Parent) => {
      * @returns {boolean}
      */
     async addFileToStorage(file, hash, options = {}) {
-      await this.withBlockingFiles(hash, async () => {
-        const sourcePath = file.path || file;
-        const stat = await fse.stat(sourcePath);
-        const destPath = this.getFilePath(hash);
-        const dir = path.dirname(destPath);
+      const sourcePath = file.path || file;
+      const stat = await fse.stat(sourcePath);
+      const destPath = this.getFilePath(hash);
+      const dir = path.dirname(destPath);
 
-        try {
-          await fse.ensureDir(dir);
-          await fse[options.copy? 'copy': 'move'](sourcePath, destPath, { overwrite: true });
-          await this.db.setData('filesTotalSize', row => row.value + stat.size);
-          await this.db.setData('filesCount', row => row.value + 1);
-          utils.isFileReadStream(file) && file.destroy();
-        }
-        catch(err) {
-          utils.isFileReadStream(file) && file.destroy();
-          await this.normalizeDir(dir);
-          throw err;
-        }
-      });      
+      try {
+        await fse.ensureDir(dir);
+        await fse[options.copy? 'copy': 'move'](sourcePath, destPath, { overwrite: true });
+        await this.db.setData('filesTotalSize', row => row.value + stat.size);
+        await this.db.setData('filesCount', row => row.value + 1);
+        utils.isFileReadStream(file) && file.destroy();
+      }
+      catch(err) {
+        utils.isFileReadStream(file) && file.destroy();
+        await this.normalizeDir(dir);
+        throw err;
+      }      
     }
 
     /**
@@ -818,22 +814,20 @@ module.exports = (Parent) => {
      * @param {string} hash
      */
     async removeFileFromStorage(hash) {
-      await this.withBlockingFiles(hash, async () => {
-        const filePath = this.getFilePath(hash);
-        const stat = await fse.stat(filePath);
-        let dir = path.dirname(filePath);
+      const filePath = this.getFilePath(hash);
+      const stat = await fse.stat(filePath);
+      let dir = path.dirname(filePath);
 
-        try {
-          await fse.remove(filePath); 
-          await this.db.setData('filesTotalSize', row => row.value - stat.size);
-          await this.db.setData('filesCount', row => row.value - 1);
-          await this.normalizeDir(dir);
-        }
-        catch(err) {
-          await this.normalizeDir(dir);
-          throw err;
-        }
-      });
+      try {
+        await fse.remove(filePath); 
+        await this.db.setData('filesTotalSize', row => row.value - stat.size);
+        await this.db.setData('filesCount', row => row.value - 1);
+        await this.normalizeDir(dir);
+      }
+      catch(err) {
+        await this.normalizeDir(dir);
+        throw err;
+      }
     }
 
     /**
@@ -1029,73 +1023,6 @@ module.exports = (Parent) => {
       const size = 1 - info.size / this.storageTempSize;
       const limit = 1 - info.count / this.options.storage.tempLimit;
       return (size + limit) / 2;
-    }   
-    
-    /**
-     * Run the function blocking the files
-     * 
-     * @async
-     * @param {string|string[]} hashes 
-     * @param {function} fn 
-     * @returns {*}
-     */
-    async withBlockingFiles(hashes, fn) {
-      !Array.isArray(hashes) && (hashes = [hashes]);
-
-      return new Promise((resolve, reject) => {
-        const interval = setInterval(async () => {
-          for(let i = 0; i < hashes.length; i++) {
-            const hash = hashes[i];
-  
-            if(this.isFileBlocked(hash)) {
-              return;
-            }
-          }
-  
-          hashes.forEach((hash) => this.blockFile(hash));
-          let err = null;
-          let res;
-  
-          try {
-            res = await fn();
-          }
-          catch(e) {
-            err = e;
-          }
-  
-          clearInterval(interval);
-          hashes.forEach((hash) => this.unblockFile(hash));  
-          err? reject(err): resolve(res);          
-        }, this.__fileBlockInterval);
-      });
-    }
-
-    /**
-     * Check the file is blocked 
-     * 
-     * @param {string} hash 
-     * @returns {boolean}
-     */
-    isFileBlocked(hash) {
-      return !!this.__blockedFiles[hash];
-    }
-
-    /**
-     * Block the file
-     * 
-     * @param {string} hash 
-     */
-    blockFile(hash) {
-      this.__blockedFiles[hash] = true;
-    }
-
-    /**
-     * Unlock the file
-     * 
-     * @param {string} hash 
-     */
-    unblockFile(hash) {
-      delete this.__blockedFiles[hash];   
     }
  
     /**

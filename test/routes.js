@@ -13,9 +13,16 @@ describe('routes', () => {
   let client;
 
   before(async function() {
-    node = new Node(await tools.createNodeOptions({ network: { secretKey: 'key' } }));
+    node = new Node(await tools.createNodeOptions({ 
+      network: { 
+        auth: { username: 'username', password: 'password' }
+      } 
+    }));
     await node.init();
-    client = new Client(await tools.createClientOptions({ address: node.address, secretKey: 'key' }));
+    client = new Client(await tools.createClientOptions({ 
+      address: node.address, 
+      auth: { username: 'username', password: 'password' }
+    }));
     await client.init();
   });
 
@@ -25,9 +32,9 @@ describe('routes', () => {
   });
 
   describe('/status', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/status`);
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return the status', async function () { 
@@ -50,9 +57,9 @@ describe('routes', () => {
   });
 
   describe('/file/:hash', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/file/hash`);
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return 404', async function () { 
@@ -73,9 +80,9 @@ describe('routes', () => {
   });
 
   describe('/client/request-file/:hash', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/client/request-file/hash`, { method: 'get' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return 404', async function () { 
@@ -96,9 +103,9 @@ describe('routes', () => {
   });
 
   describe('/client/store-file', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/client/store-file`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return an error', async function () { 
@@ -121,9 +128,9 @@ describe('routes', () => {
   });
 
   describe('/client/get-file-link/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/client/get-file-link`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a data error', async function () { 
@@ -142,9 +149,9 @@ describe('routes', () => {
   });
 
   describe('/client/get-file-links/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/client/get-file-links`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a data error', async function () { 
@@ -163,9 +170,9 @@ describe('routes', () => {
   });
 
   describe('/client/remove-file/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/client/remove-file/`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a data error', async function () { 
@@ -185,9 +192,9 @@ describe('routes', () => {
   });
 
   describe('/api/master/get-file-storing-candidates/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a master acception error', async function () { 
@@ -221,9 +228,9 @@ describe('routes', () => {
   });
 
   describe('/api/master/get-file-links/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/master/get-file-links/`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a master acception error', async function () { 
@@ -254,9 +261,9 @@ describe('routes', () => {
   });
 
   describe('/api/master/remove-file/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/master/remove-file/`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a master acception error', async function () { 
@@ -287,9 +294,9 @@ describe('routes', () => {
   });
 
   describe('/api/slave/get-file-storing-info/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/slave/get-file-storing-info/`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a data error', async function () {
@@ -316,9 +323,9 @@ describe('routes', () => {
   });
 
   describe('/api/slave/get-file-link-info/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/slave/get-file-link-info/`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a data error', async function () {
@@ -357,9 +364,9 @@ describe('routes', () => {
   });
 
   describe('/api/slave/remove-file/', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/slave/remove-file/`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return a data error', async function () {
@@ -380,9 +387,9 @@ describe('routes', () => {
   });
 
   describe('/api/node/store-file/:hash', function () {
-    it('should return an access error', async function () { 
+    it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/node/store-file/hash`, { method: 'post' });
-      assert.equal(await res.status, 403);
+      assert.equal(await res.status, 401);
     });
 
     it('should return an error', async function () { 

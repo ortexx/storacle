@@ -109,11 +109,8 @@ midds.filesFormData = node => {
 /**
  * Control file requests limit by the file hash
  */
-midds.requestQueueFileHash = (node, active = true) => {
-  const options = {
-    limit: 1,
-    active
-  };
+midds.requestQueueFileHash = (node) => {
+  const options = { limit: 1 };
 
   return (req, res, next) => {
     return midds.requestQueue(node, `fileHash=${req.params.hash || req.body.hash}`, options)(req, res, next);
