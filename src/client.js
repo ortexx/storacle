@@ -17,8 +17,8 @@ module.exports = (Parent) => {
         request: {
           fileStoringTimeout: '2.05h',
           fileGettingTimeout: '1h',
-          fileRemovalTimeout: '6s',          
-          fileLinkGettingTimeout: '6s'
+          fileRemovalTimeout: '10s',          
+          fileLinkGettingTimeout: '10s'
         },
       }, options);
 

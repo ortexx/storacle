@@ -73,3 +73,108 @@ Storing files of your own projects, websites, etc. The network can be made priva
 
 ### 3. Serverless solutions
 Since the library is written in javascript, you can receive / send / work with files in the browser and do not use server code at all. In some cases, it can be very convenient.
+
+## Node configuration
+
+When you create an instance of the node you can pass options below. Only specific options of this library are described here, without considering the options of the parent classes.
+
+* {integer} __[request.clientStoringConcurrency=20]__ - the maximum number of simultaneous client storing requests per endpoint.
+
+* {number|string} __[request.fileStoringNodeTimeout="2h"]__ - file storing timeout.
+
+* {number|string} __[request.cacheTimeout=250]__ - file cache link check timeout.
+
+* {number|string} __[storage.dataSize="45%"]__ - amount of space for storing files. If indicated in percent, the calculation will be based on the maximum available disk space.
+
+* {number|string} __[storage.tempSize="45%"]__ - amount of space for temporary files. If indicated in percent, the calculation will be based on  the maximum available disk space.
+
+* {number|string} __[storage.tempLifetime="1d"]__ - temporary files holding period.
+
+* {integer} __[storage.tempLimit=1000]__ - maximum number of temporary files
+
+* {integer} __[storage.autoCleanSize=0]__ - amount of space that should always be free. If indicated in percent, the calculation will be based on storage.dataSize. 
+
+* {object} __[file]__ - section that responds for a single file settings.
+
+* {number|string} __[file.maxSize="50%"]__ - maximum size of one file. If indicated in percent, the calculation will be based on storage.dataSize. 
+
+* {integer|string} __[file.preferredDublicates="auto"]__ - preferred number of file copies on the network. If indicated in percent, the calculation will be based on the network size. If the option is "auto" it will be calculated as `Math.ceil(Math.sqrt(networkSize))`.
+
+* {number|string} __[file.responseCacheLifetime="7d"]__ - period of file caching after giving it to the client.
+
+* {string[]} __[file.mimeWhitelist=[]]__ - whitelist for filtering a file by mime type.
+
+* {string[]} __[file.mimeBlacklist=[]]__ - blacklist for filtering a file by mime type.
+
+* {string[]} __[file.extWhitelist=[]]__ - whitelist for filtering a file by its extension.
+
+* {string[]} __[file.extBlacklist=[]]__ - blacklist for filtering a file by its extension.
+
+* {object|false} __[file.linkCache]__ - file link caching transport options.
+
+* {integer} __[file.linkCache.limit=50000]__ - maximum cache links.
+
+* {number|string} __[file.linkCache.lifetime="7d"]__ - cache link holding period.
+
+* {number|string} __[task.cleanUpStorageInterval="30s"]__ - storage cleanup task interval.
+
+* {number|string} __[task.cleanUpTempDirInterval="20s"]__ - temporary folder cleanup task interval.
+
+* {number|string} __[task.calculateStorageInfoInterval="2s"]__ - storage information calculaion task interval.
+
+## Client configuration
+
+When you create an instance of the client you can pass options below. Only specific options of this library are described here, without considering the options of the parent classes.
+
+* {number|string} __[request.fileStoringTimeout="2.05h"]__ - file storing timeout.
+
+* {number|string} __[request.fileGettingTimeout="1h"]__ - file getting timeout.
+
+* {number|string} __[request.fileRemovalTimeout="10s"]__ - file removal timeout.
+
+* {number|string} __[request.fileLinkGettingTimeout="10s"]__ - file link getting timeout.
+
+## Client interface
+
+async __Client.prototype.storeFile()__ - add file to the network.
+  * {string|fs.ReadStream|Buffer|Blob} __file__ - any file
+  * {object} __[options]__ - storing options
+  * {number} __[options.timeout]__ - storing timeout
+
+async __Client.prototype.getFileLink()__ - get the file link by the hash.
+  * {string} __hash__ - file hash
+  * {object} __[options]__ - getting options
+  * {number} __[options.timeout]__ - getting timeout
+
+async __Client.prototype.getFileLinks()__ - get all file links by the hash.
+  * {string} __hash__ - file hash
+  * {object} __[options]__ - getting options
+  * {number} __[options.timeout]__ - getting timeout  
+
+async __Client.prototype.getFileToBuffer()__ - download the file and return the buffer.
+  * {string} __hash__ - file hash
+  * {object} __[options]__ - getting options
+  * {number} __[options.timeout]__ - getting timeout
+
+async __Client.prototype.getFileToPath()__ - download the file and write it to the specified path.
+  * {string} __hash__ - file hash
+  * {object} __[options]__ - getting options
+  * {number} __[options.timeout]__ - getting timeout
+
+async __Client.prototype.getFileToBlob()__ - download the file and return the blob. For browser client only.
+  * {string} __hash__ - file hash
+  * {object} __[options]__ - getting options
+  * {number} __[options.timeout]__ - getting timeout
+
+async __Client.prototype.removeFile()__ - Remove the file by hash.
+  * {string} __hash__ - file hash
+  * {object} __[options]__ - removal options
+  * {number} __[options.timeout]__ - removal timeout
+
+__Client.prototype.createRequestedFileLink()__ - сreate a requested file link. This is convenient if you need to get the link without doing any asynchronous operations at the moment. 
+  * {string} __hash__ - file hash
+  * {object} __[options]__ - options
+
+## Contribution
+
+If you face a bug or have an idea how to improve the library create an issue on github. In order to fix something or add new code yourself fork the library, make changes and create a pull request to the master branch. Don't forget about tests in this case. Also you can join [the project on github](https://github.com/ortexx/storacle/projects/1).

@@ -44,7 +44,7 @@ module.exports = [
     method: 'post', 
     url: '/remove-file',
     fn: [      
-      midds.requestQueueFileHash, 
+      midds.requestQueueFileHash,
       controllers.removeFile
     ]
   }

@@ -13,12 +13,14 @@ const ServerExpressStoracle = require('./server/transports/express')();
 const utils = require('./utils');
 const errors = require('./errors');
 const schema = require('./schema');
+const pack = require('../package.json');
 
 module.exports = (Parent) => {
   /**
    * Class to manage the storacle node
    */
   return class NodeStoracle extends (Parent || Node) {
+    static get version () { return pack.version }
     static get codename () { return 'storacle' }
     static get DatabaseTransport () { return DatabaseLokiStoracle }
     static get ServerTransport () { return ServerExpressStoracle }
@@ -34,12 +36,12 @@ module.exports = (Parent) => {
           fileStoringNodeTimeout: '2h',
           cacheTimeout: 250
         },
-        storage: {     
-          autoCleanSize: 0,
+        storage: { 
           dataSize: '45%',
           tempSize: '45%',
           tempLifetime: '1d',
-          tempLimit: 1000
+          tempLimit: 1000,
+          autoCleanSize: 0
         },
         file: {          
           maxSize: '50%',
@@ -61,8 +63,7 @@ module.exports = (Parent) => {
         }
       }, options);
 
-      super(options);
-  
+      super(options);  
       this.storageDataSize = 0;
       this.storageTempSize = 0;
       this.storageAutoCleanSize = 0;
@@ -365,7 +366,7 @@ module.exports = (Parent) => {
      */
     async duplicateFile(servers, file, info, options = {}) {
       options = _.assign({
-        responseSchema: schema.getFileStoringResponse(),  
+        responseSchema: schema.getFileStoringResponse(),
         cache: true      
       }, options);
       let tempFile;
@@ -666,7 +667,7 @@ module.exports = (Parent) => {
           const filePath = path.join(this.tempPath, files[i]);
           const stat = await fse.stat(filePath);
           
-          if(Date.now() - stat.atimeMs <= this.options.storage.tempLifetime) {
+          if(Date.now() - stat.mtimeMs <= this.options.storage.tempLifetime) {
             continue;
           }
 
@@ -826,7 +827,10 @@ module.exports = (Parent) => {
       }
       catch(err) {
         await this.normalizeDir(dir);
-        throw err;
+
+        if(err.code != 'ENOENT') {
+          throw err;
+        }        
       }
     }
 
