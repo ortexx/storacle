@@ -39,8 +39,7 @@ module.exports = (Parent) => {
         storage: { 
           dataSize: '45%',
           tempSize: '45%',
-          tempLifetime: '1d',
-          tempLimit: 1000,
+          tempLifetime: '2h',
           autoCleanSize: 0
         },
         file: {          
@@ -947,7 +946,7 @@ module.exports = (Parent) => {
      * @param {object} [info.storage]
      */
     async fileAvailabilityTest(info = {}) {
-      const storage = info.storage || await this.getStorageInfo({ tempUsed: false, tempFree: false });
+      const storage = info.storage || await this.getStorageInfo();
       const mimeWhite = this.options.file.mimeWhitelist || [];
       const mimeBlack = this.options.file.mimeBlacklist || [];
       const extWhite = this.options.file.extWhitelist || [];
@@ -959,6 +958,10 @@ module.exports = (Parent) => {
 
       if(info.size > storage.free) {
         throw new errors.WorkError('Not enough space to store', 'ERR_STORACLE_NOT_ENOUGH_SPACE');
+      }
+
+      if(info.size > storage.tempFree) {
+        throw new errors.WorkError('Not enough space in temp folder', 'ERR_STORACLE_NOT_ENOUGH_SPACE_TEMP');
       }
 
       if(info.size > this.fileMaxSize) {
@@ -1024,9 +1027,7 @@ module.exports = (Parent) => {
      */
     async getAvailabilityTempDir() {
       const info = await this.getTempDirInfo();
-      const size = 1 - info.size / this.storageTempSize;
-      const limit = 1 - info.count / this.options.storage.tempLimit;
-      return (size + limit) / 2;
+      return 1 - info.size / this.storageTempSize;
     }
  
     /**

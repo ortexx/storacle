@@ -489,6 +489,16 @@ describe('Node', () => {
       }
     });
 
+    it('should throw an error because of temp size', async () => {
+      try {
+        await node.fileAvailabilityTest({ hash: '1', size: 2, storage: { tempFree: 1, free: 3 } });
+        throw new Error('Fail');
+      } 
+      catch (err) {
+        assert.isOk(err.message.match('space in temp'));
+      }
+    });
+
     it('should throw an error because of max size', async () => {
       try {
         node.fileMaxSize = 1;

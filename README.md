@@ -88,9 +88,7 @@ When you create an instance of the node you can pass options below. Only specifi
 
 * {number|string} __[storage.tempSize="45%"]__ - amount of space for temporary files. If indicated in percent, the calculation will be based on  the maximum available disk space.
 
-* {number|string} __[storage.tempLifetime="1d"]__ - temporary files holding period.
-
-* {integer} __[storage.tempLimit=1000]__ - maximum number of temporary files
+* {number|string} __[storage.tempLifetime="2h"]__ - temporary files holding period.
 
 * {integer} __[storage.autoCleanSize=0]__ - amount of space that should always be free. If indicated in percent, the calculation will be based on storage.dataSize. 
 

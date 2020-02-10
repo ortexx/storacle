@@ -79,14 +79,13 @@ midds.filesFormData = node => {
       try {
         let info = await node.getTempDirInfo();
         let maxSize = node.storageTempSize - info.size;
-        let count = info.count;
         let length = +req.headers['content-length'];
         
         if(length > node.fileMaxSize) {
           throw new errors.WorkError('The file is too big', 'ERR_STORACLE_FILE_BIG');
         }
 
-        if(count > node.options.storage.tempLimit || length > maxSize) {
+        if(length > maxSize) {
           throw new errors.WorkError('Too many temp files, please try later', 'ERR_STORACLE_REQUEST_TEMP_LIMIT');
         }
 
