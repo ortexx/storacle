@@ -567,7 +567,7 @@ describe('Node', () => {
         throw new Error('Fail');
       } 
       catch (err) {
-        assert.isOk(err.message.match('space in temp'));
+        assert.isOk(err.message.match('space in the temp'));
       }
     });
 

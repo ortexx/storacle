@@ -955,8 +955,8 @@ module.exports = (Parent) => {
         throw new errors.WorkError('Not enough space to store', 'ERR_STORACLE_NOT_ENOUGH_SPACE');
       }
 
-      if(info.size > storage.tempFree) {
-        throw new errors.WorkError('Not enough space in temp folder', 'ERR_STORACLE_NOT_ENOUGH_SPACE_TEMP');
+      if(this.calculateTempFileMinSize(info.size) > storage.tempFree) {
+        throw new errors.WorkError('Not enough space in the temp folder', 'ERR_STORACLE_NOT_ENOUGH_SPACE_TEMP');
       }
 
       if(info.size > this.fileMaxSize) {
