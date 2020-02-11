@@ -43,7 +43,7 @@ module.exports = (Parent) => {
           autoCleanSize: 0
         },
         file: {          
-          maxSize: '50%',
+          maxSize: '40%',
           preferredDublicates: 'auto',
           responseCacheLifetime: '7d',
           mimeWhitelist: [],
@@ -185,52 +185,47 @@ module.exports = (Parent) => {
       const available = info.available + used + tempDirInfo.size;
       
       if(typeof this.storageDataSize == 'string') {
-        this.storageDataSize = Math.floor(available * parseFloat(this.storageDataSize) / 100);
+        const arr = this.storageDataSize.split(' - ');
+        this.storageDataSize = Math.floor(available * parseFloat(arr[0]) / 100);
+        arr[1] && (this.storageDataSize -= utils.getBytes(arr[1]));
       }
       
       if(typeof this.storageTempSize == 'string') {
+        const arr = this.storageTempSize.split(' - ');
         this.storageTempSize = Math.floor(available * parseFloat(this.storageTempSize) / 100);
+        arr[1] && (this.storageTempSize -= utils.getBytes(arr[1]));
       }
 
       if(this.storageDataSize > available) {
-        this.storageDataSize = available;
-        this.logger.warn(`"storage.dataSize" is greater than available disk space`);
+        throw new Error(`"storage.dataSize" is greater than available disk space`);
       }
       
       if(this.storageTempSize > available) {
-        this.storageTempSize = available;
-        this.logger.warn(`"storage.tempSize" is greater than available disk space`);
+        throw new Error(`"storage.tempSize" is greater than available disk space`);
       }
-      
-      const dev = (this.storageDataSize + this.storageTempSize) / available; 
-      
-      if(dev > 1) {
-        this.storageDataSize = Math.floor(this.storageDataSize / dev);
-        this.storageTempSize =  Math.floor(this.storageTempSize / dev);
-        this.logger.warn(`"storage.dataSize" + "storage.tempSize" is greater than available disk space`);
+            
+      if(this.storageDataSize + this.storageTempSize > available) {
+        throw new Error(`"storage.dataSize" + "storage.tempSize" is greater than available disk space`);
       }
 
       if(typeof this.storageAutoCleanSize == 'string') {
         this.storageAutoCleanSize = Math.floor(this.storageDataSize * parseFloat(this.storageAutoCleanSize) / 100);
       }
 
-      if(typeof this.fileMaxSize == 'string') {
-        this.fileMaxSize = Math.floor(this.storageDataSize * parseFloat(this.fileMaxSize) / 100);
-      }
-      
       if(this.storageAutoCleanSize > this.storageDataSize) {
-        this.storageAutoCleanSize = this.storageDataSize;
-        this.logger.warn(`"storage.autoCleanSize" is greater than "storage.dataSize"`);
+        throw new Error(`"storage.autoCleanSize" is greater than "storage.dataSize"`);
+      }
+
+      if(typeof this.fileMaxSize == 'string') {
+        this.fileMaxSize = Math.floor(available * parseFloat(this.fileMaxSize) / 100);
       }
       
       if(this.fileMaxSize > this.storageDataSize) {
-        this.fileMaxSize = this.storageDataSize;
-        this.logger.warn(`"file.maxSize" is greater than "storage.dataSize"`);
+        throw new Error(`"file.maxSize" is greater than "storage.dataSize"`);
       }
 
-      if(this.fileMaxSize > this.tempSize) {
-        this.fileMaxSize = this.tempSize;
-        this.logger.warn(`"file.maxSize" is greater than "storage.tempSize"`);
+      if(this.calculateTempFileMinSize(this.fileMaxSize) > this.storageTempSize) {
+        throw new Error(`Minimum temp file size is greater than "storage.tempSize"`);
       }
     }
 
@@ -1028,6 +1023,16 @@ module.exports = (Parent) => {
     async getAvailabilityTempDir() {
       const info = await this.getTempDirInfo();
       return 1 - info.size / this.storageTempSize;
+    }
+
+    /**
+     * Calculate a minimum temp file size
+     * 
+     * @param {number} size
+     * @returns {number}
+     */
+    calculateTempFileMinSize(size) {
+      return size;
     }
  
     /**

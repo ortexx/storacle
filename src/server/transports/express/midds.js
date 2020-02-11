@@ -85,8 +85,8 @@ midds.filesFormData = node => {
           throw new errors.WorkError('The file is too big', 'ERR_STORACLE_FILE_BIG');
         }
 
-        if(length > maxSize) {
-          throw new errors.WorkError('Too many temp files, please try later', 'ERR_STORACLE_REQUEST_TEMP_LIMIT');
+        if(node.calculateTempFileMinSize(length) > maxSize) {
+          throw new errors.WorkError('Not enough place in the temp folder', 'ERR_STORACLE_REQUEST_TEMP_NOT_ENOUGH');
         }
 
         formData.parse({

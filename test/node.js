@@ -54,25 +54,97 @@ describe('Node', () => {
 
     it('should define the necessary variables as expected using a percentage', async () => {      
       node.options.storage.dataSize = '50%';
-      node.options.storage.tempSize = '50%';
+      node.options.storage.tempSize = '50% - 1b';
       node.options.storage.autoCleanSize = '10%';
       node.options.file.maxSize = '20%';
       await node.calculateStorageInfo();
       assert.equal(node.storageDataSize, Math.floor(data.available / 2), 'check "storage.dataSize"');
-      assert.equal(Math.floor(node.storageTempSize), Math.floor(node.storageDataSize), 'check "storage.tempSize"');
+      assert.equal(Math.floor(node.storageTempSize), Math.floor(node.storageDataSize) - 1, 'check "storage.tempSize"');
       assert.equal(Math.floor(node.storageAutoCleanSize), Math.floor(node.storageDataSize * 0.1), 'check "storage.autoCleanSize"');
-      assert.equal(Math.floor(node.fileMaxSize), Math.floor(node.storageDataSize * 0.2), 'check "file.maxSize"');
+      assert.equal(Math.floor(node.fileMaxSize), Math.floor(data.available * 0.2), 'check "file.maxSize"');
     });
 
-    it('should correct the values considering an available space', async () => {
+    it('should throw "storage.dataSize" error', async () => {
+      node.options.storage.dataSize = '110%';
+      node.options.storage.tempSize = '80%';
+
+      try {
+        await node.calculateStorageInfo();
+        throw new Error('Fail');
+      }
+      catch(err) {
+        assert.isOk(err.message.includes('"storage.dataSize"'));
+      }
+    });
+
+    it('should throw "storage.tempSize" error', async () => {
+      node.options.storage.dataSize = '80%';
+      node.options.storage.tempSize = '110%';
+
+      try {
+        await node.calculateStorageInfo();
+        throw new Error('Fail');
+      }
+      catch(err) {
+        assert.isOk(err.message.includes('"storage.tempSize"'));
+      }
+    });
+
+    it('should throw "storage.autoCleanSize" error', async () => {
+      node.options.storage.dataSize = '80%';
+      node.options.storage.tempSize = '10%';
+      node.options.storage.autoCleanSize = '110%';
+
+      try {
+        await node.calculateStorageInfo();
+        throw new Error('Fail');
+      }
+      catch(err) {
+        assert.isOk(err.message.includes('"storage.autoCleanSize"'));
+      }
+
+      node.options.storage.autoCleanSize = 0;
+    });
+
+    it('should throw "file.maxSize" error because of the data size', async () => {      
+      node.options.storage.dataSize = '10%';
+      node.options.storage.tempSize = '30%';
+      node.options.file.maxSize = '20%';
+
+      try {
+        await node.calculateStorageInfo();
+        throw new Error('Fail');
+      }
+      catch(err) {
+        assert.isOk(err.message.includes('"file.maxSize"'));
+      }
+    });
+
+    it('should throw "file.maxSize" error because of the temp size', async () => {
+      node.options.storage.dataSize = '30%';
+      node.options.storage.tempSize = '10%';
+      node.options.file.maxSize = '20%';
+
+      try {
+        await node.calculateStorageInfo();
+        throw new Error('Fail');
+      }
+      catch(err) {
+        assert.isOk(err.message.includes('Minimum temp file'));
+      }
+    });
+
+    it('should throw "dataSize + tempSize" error', async () => {
       node.options.storage.dataSize = '50%';
       node.options.storage.tempSize = '80%';
-      node.options.storage.autoCleanSize = '110%';
-      node.options.file.maxSize = '110%';
-      await node.calculateStorageInfo();
-      assert.isTrue(node.storageDataSize + node.storageTempSize <= data.available, 'check "storage.dataSize" + "storage.tempSize"');
-      assert.equal(node.storageAutoCleanSize, node.storageDataSize, 'check "storage.autoCleanSize"');
-      assert.equal(node.fileMaxSize,node.storageDataSize, 'check "storage.maxSize"');
+
+      try {
+        await node.calculateStorageInfo();
+        throw new Error('Fail');
+      }
+      catch(err) {
+        assert.isOk(err.message.includes('"storage.dataSize" + "storage.tempSize"'));
+      }
     });
   });
 

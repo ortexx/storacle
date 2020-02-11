@@ -94,7 +94,7 @@ When you create an instance of the node you can pass options below. Only specifi
 
 * {object} __[file]__ - section that responds for a single file settings.
 
-* {number|string} __[file.maxSize="50%"]__ - maximum size of one file. If indicated in percent, the calculation will be based on storage.dataSize. 
+* {number|string} __[file.maxSize="40%"]__ - maximum size of one file. If indicated in percent, the calculation will be based on the maximum available disk space. 
 
 * {integer|string} __[file.preferredDublicates="auto"]__ - preferred number of file copies on the network. If indicated in percent, the calculation will be based on the network size. If the option is "auto" it will be calculated as `Math.ceil(Math.sqrt(networkSize))`.
 
