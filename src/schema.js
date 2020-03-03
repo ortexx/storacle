@@ -73,6 +73,40 @@ schema.getFileStoringResponse = function () {
   }
 };
 
+schema.getFileStoringInfoMasterResponse = function (options = {}) {
+  return this.getFileStoringInfoButlerResponse(options);
+}
+
+schema.getFileStoringInfoButlerResponse = function (options = {}) {
+  const address = this.getAddress();
+
+  return {
+    type: 'object',
+    props: {
+      address,
+      candidates: {
+        type: 'array',
+        uniq: 'address',
+        items: this.getFileStoringInfoSlaveResponse(),
+        maxLength: options.networkOptimum
+      },
+      existing: {
+        type: 'array',
+        uniq: 'address',
+        items: {
+          type: 'object',
+          props: {
+            address,
+            existenceInfo: this.getFileExistenceInfo()
+          },
+          strict: true
+        }
+      }
+    },
+    strict: true
+  }
+};
+
 schema.getFileStoringInfoSlaveResponse = function () {
   return {
     type: 'object',
@@ -86,28 +120,19 @@ schema.getFileStoringInfoSlaveResponse = function () {
   }
 };
 
-schema.getFileStoringCandidatesMasterResponse = function (options = {}) {
-  const address = this.getAddress();
 
+schema.getFileLinksMasterResponse = function () {
+  return this.getFileLinksButlerResponse();
+}
+
+schema.getFileLinksButlerResponse = function () {
   return {
     type: 'object',
     props: {
-      address,
-      candidates: {
+      address: this.getAddress(),
+      links: {
         type: 'array',
-        items: this.getFileStoringInfoSlaveResponse(),
-        maxLength: options.networkOptimum
-      },
-      existing: {
-        type: 'array',
-        items: {
-          type: 'object',
-          props: {
-            address,
-            existenceInfo: this.getFileExistenceInfo() 
-          },
-          strict: true
-        }
+        items: this.getFileLinksSlaveResponse()
       }
     },
     strict: true
@@ -125,22 +150,11 @@ schema.getFileLinksSlaveResponse = function () {
   }
 };
 
-schema.getFileLinksMasterResponse = function (options = {}) {
-  return {
-    type: 'object',
-    props: {
-      address: this.getAddress(),
-      links: {
-        type: 'array',
-        items: this.getFileLinksSlaveResponse(),
-        maxLength: options.networkOptimum
-      }
-    },
-    strict: true
-  }
+schema.getFileRemovalMasterResponse = function () {
+  return this.getFileRemovalButlerResponse()
 };
 
-schema.getFileRemovalMasterResponse = function () {
+schema.getFileRemovalButlerResponse = function () {
   return {
     type: 'object',
     props: {
@@ -156,7 +170,7 @@ schema.getFileRemovalSlaveResponse = function () {
     type: 'object',
     props: {
       address: this.getAddress(),
-      removed: 'boolean'
+      removed: 'number'
     },
     strict: true
   }

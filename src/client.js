@@ -21,7 +21,6 @@ module.exports = (Parent) => {
           fileLinkGettingTimeout: '10s'
         },
       }, options);
-
       super(options);
     }
 
@@ -34,11 +33,10 @@ module.exports = (Parent) => {
      * @returns {string}
      */
     async getFileLink(hash, options = {}) {
-      return (await this.request('get-file-link', {
+      return (await this.request('get-file-link', Object.assign({}, options, {
         body: { hash },
-        timeout: options.timeout || this.options.request.fileLinkGettingTimeout,
-        useInitialAddress: options.useInitialAddress
-      })).link;
+        timeout: options.timeout || this.options.request.fileLinkGettingTimeout
+      }))).link;
     }
 
     /**
@@ -50,11 +48,10 @@ module.exports = (Parent) => {
      * @returns {string}
      */
     async getFileLinks(hash, options = {}) {
-      return (await this.request('get-file-links', {
+      return (await this.request('get-file-links', Object.assign({}, options, {
         body: { hash },
-        timeout: options.timeout || this.options.request.fileLinkGettingTimeout,
-        useInitialAddress: options.useInitialAddress
-      })).links;
+        timeout: options.timeout || this.options.request.fileLinkGettingTimeout
+      }))).links;
     }
 
     /**
@@ -69,11 +66,10 @@ module.exports = (Parent) => {
       const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
 
-      let result  = await this.request('get-file-link', {
+      let result  = await this.request('get-file-link', Object.assign({}, options, {
         body: { hash },
-        timeout: timer(this.options.request.fileLinkGettingTimeout),
-        useInitialAddress: options.useInitialAddress
-      });
+        timeout: timer(this.options.request.fileLinkGettingTimeout)
+      }));
       
       if(!result.link) {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
@@ -95,11 +91,10 @@ module.exports = (Parent) => {
       const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
 
-      let result  = await this.request('get-file-link', {
+      let result  = await this.request('get-file-link', Object.assign({}, options, {
         body: { hash },
-        timeout: timer(this.options.request.fileLinkGettingTimeout),
-        useInitialAddress: options.useInitialAddress
-      });
+        timeout: timer(this.options.request.fileLinkGettingTimeout)
+      }));
 
       if(!result.link) {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
@@ -120,11 +115,10 @@ module.exports = (Parent) => {
       const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
 
-      let result  = await this.request('get-file-link', {
+      let result  = await this.request('get-file-link', Object.assign({}, options, {
         body: { hash },
-        timeout: timer(this.options.request.fileLinkGettingTimeout),
-        useInitialAddress: options.useInitialAddress
-      });
+        timeout: timer(this.options.request.fileLinkGettingTimeout)
+      }));
 
       if(!result.link) {
         throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
@@ -150,7 +144,7 @@ module.exports = (Parent) => {
           file = fs.createReadStream(file);
         }
 
-        const result = await this.request('store-file', {
+        const result = await this.request('store-file', Object.assign({}, options, {
           formData: {
             file: {
               value: file,
@@ -160,9 +154,8 @@ module.exports = (Parent) => {
               }
             }
           },
-          timeout: options.timeout || this.options.request.fileStoringTimeout,
-          useInitialAddress: options.useInitialAddress
-        });
+          timeout: options.timeout || this.options.request.fileStoringTimeout
+        }));
 
         destroyFileStream();
         return result.hash;
@@ -182,11 +175,10 @@ module.exports = (Parent) => {
      * @returns {object}
      */
     async removeFile(hash, options = {}) {
-      return await this.request('remove-file', {
+      return await this.request('remove-file', Object.assign({}, options, {
         body: { hash },
-        timeout: options.timeout || this.options.request.fileRemovalTimeout,
-        useInitialAddress: options.useInitialAddress
-      });
+        timeout: options.timeout || this.options.request.fileRemovalTimeout
+      }));
     }
 
     /**

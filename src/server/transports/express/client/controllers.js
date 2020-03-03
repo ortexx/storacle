@@ -39,7 +39,7 @@ module.exports.storeFile = node => {
         throw new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
       }
 
-      const hash = await node.storeFile(file, { timeout: node.createRequestTimeout(req.body) });
+      const hash = await node.storeFile(file, node.prepareClientMessageOptions(req.body));
       res.send({ hash });
     }
     catch(err) {
@@ -60,7 +60,7 @@ module.exports.getFileLink = node => {
         throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
 
-      const link = await node.getFileLink(hash, { timeout: node.createRequestTimeout(req.body) });      
+      const link = await node.getFileLink(hash, node.prepareClientMessageOptions(req.body));      
       res.send({ link });
     }
     catch(err) {
@@ -81,7 +81,7 @@ module.exports.getFileLinks = node => {
         throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
 
-      const links = await node.getFileLinks(hash, { timeout: node.createRequestTimeout(req.body) });
+      const links = await node.getFileLinks(hash, node.prepareClientMessageOptions(req.body));
       res.send({ links });
     }
     catch(err) {
@@ -102,7 +102,7 @@ module.exports.removeFile = node => {
         throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
       }
 
-      const result = await node.removeFile(hash, { timeout: node.createRequestTimeout(req.body) });
+      const result = await node.removeFile(hash, node.prepareClientMessageOptions(req.body));
       res.send(result);
     }
     catch(err) {

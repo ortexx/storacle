@@ -1,4 +1,5 @@
 const schema = require('../../../../../schema');
+const _ = require('lodash');
 
 /**
  * Get candidates to store the file
@@ -6,15 +7,14 @@ const schema = require('../../../../../schema');
 module.exports.getFileStoringInfo = node => {
   return async (req, res, next) => {
     try {      
-      const info = req.body.info || {};  
-      node.hashTest(info.hash);
+      const info = req.body.info || {}; 
+      node.hashTest(info.hash);     
       const options = node.createRequestNetworkOptions(req.body, {
         responseSchema: schema.getFileStoringInfoSlaveResponse()
       });
       const results = await node.requestNetwork('get-file-storing-info', options);      
-      const existing = results.reduce((p, c) => p.concat(c.existing), []);
-      const opts = await node.getFileStoringFilterOptions(info);
-      const candidates = await node.filterCandidatesMatrix(results.map(r => r.candidates), opts);
+      const existing = results.filter(c => c.existenceInfo).map(c => _.pick(c, ['address', 'existenceInfo']));
+      const candidates = await node.filterCandidates(results, await node.getFileStoringFilterOptions(info));
       res.send({ candidates, existing });
     }
     catch(err) {
@@ -28,14 +28,13 @@ module.exports.getFileStoringInfo = node => {
  */
 module.exports.getFileLinks = node => {
   return async (req, res, next) => {
-    try {      
+    try {
       node.hashTest(req.body.hash);
       const options = node.createRequestNetworkOptions(req.body, {
         responseSchema: schema.getFileLinksSlaveResponse()
       });
       const results = await node.requestNetwork('get-file-links', options);
-      const opts = await node.getFileLinksFilterOptions();
-      const links = await node.filterCandidatesMatrix(results.map(r => r.candidates), opts);
+      const links = await node.filterCandidates(results, await node.getFileLinksFilterOptions());
       return res.send({ links });
     }
     catch(err) {

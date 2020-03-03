@@ -6,6 +6,7 @@ module.exports = (options = {}, webpack = null, onlyMerge = false) => {
   options = merge({
     include: [],
     mock: {
+      "detect-file-type": true,
       "diskusage": true,
       "fs-extra": true,
       "crypto": path.join(__dirname, "/src/browser/client/mock/crypto.js")

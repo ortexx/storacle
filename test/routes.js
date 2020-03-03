@@ -191,38 +191,31 @@ describe('routes', () => {
     });
   });
 
-  describe('/api/master/get-file-storing-candidates/', function () {
+  describe('/api/master/get-file-storing-info/', function () {
     it('should return an auth error', async function () { 
-      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, { method: 'post' });
+      const res = await fetch(`http://${node.address}/api/master/get-file-storing-info/`, { method: 'post' });
       assert.equal(await res.status, 401);
     });
 
-    it('should return a master acception error', async function () { 
-      const options = node.createDefaultRequestOptions();
-      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, options);
-      assert.equal(await res.status, 422);
-    });
-
-    it('should return a data error', async function () { 
-      const body = { ignoreAcception: true };
-      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));  
-      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, options);
+    it('should return a data error', async function () {
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());  
+      const res = await fetch(`http://${node.address}/api/master/get-file-storing-info/`, options);
       assert.equal(res.status, 422);
     });
 
     it('should return the right schema', async function () {
       const body = {
-        ignoreAcception: true,
+        level: 2,
         info: {
           size: 1,
           hash: 'hash'
         }
       };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
-      const res = await fetch(`http://${node.address}/api/master/get-file-storing-candidates/`, options);
+      const res = await fetch(`http://${node.address}/api/master/get-file-storing-info/`, options);
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
-        utils.validateSchema(schema.getFileStoringCandidatesMasterResponse(), json);
+        utils.validateSchema(schema.getFileStoringInfoMasterResponse(), json);
       });
     });
   });
@@ -233,22 +226,15 @@ describe('routes', () => {
       assert.equal(await res.status, 401);
     });
 
-    it('should return a master acception error', async function () { 
-      const options = node.createDefaultRequestOptions();
-      const res = await fetch(`http://${node.address}/api/master/get-file-links/`, options);
-      assert.equal(await res.status, 422);
-    });
-
-    it('should return a data error', async function () { 
-      const body = { ignoreAcception: true };
-      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));   
+    it('should return a data error', async function () {
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());   
       const res = await fetch(`http://${node.address}/api/master/get-file-links/`, options);
       assert.equal(res.status, 422);
     });
 
     it('should return the right schema', async function () {
       const body = {
-        ignoreAcception: true,
+        level: 2,
         hash: 'hash'
       };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
@@ -266,22 +252,15 @@ describe('routes', () => {
       assert.equal(await res.status, 401);
     });
 
-    it('should return a master acception error', async function () { 
-      const options = node.createDefaultRequestOptions();
-      const res = await fetch(`http://${node.address}/api/master/remove-file/`, options);
-      assert.equal(await res.status, 422);
-    });
-
     it('should return a data error', async function () { 
-      const body = { ignoreAcception: true };
-      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));   
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());   
       const res = await fetch(`http://${node.address}/api/master/remove-file/`, options);
       assert.equal(res.status, 422);
     });
 
     it('should return the right schema', async function () {
       const body = {
-        ignoreAcception: true,
+        level: 2,
         hash: 'hash'
       };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
@@ -289,6 +268,87 @@ describe('routes', () => {
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
         utils.validateSchema(schema.getFileRemovalMasterResponse(), json);
+      });
+    });
+  });
+
+  describe('/api/butler/get-file-storing-info/', function () {
+    it('should return an auth error', async function () { 
+      const res = await fetch(`http://${node.address}/api/butler/get-file-storing-info/`, { method: 'post' });
+      assert.equal(await res.status, 401);
+    });
+
+    it('should return a data error', async function () {
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());  
+      const res = await fetch(`http://${node.address}/api/butler/get-file-storing-info/`, options);
+      assert.equal(res.status, 422);
+    });
+
+    it('should return the right schema', async function () {
+      const body = {
+        level: 1,
+        info: {
+          size: 1,
+          hash: 'hash'
+        }
+      };
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
+      const res = await fetch(`http://${node.address}/api/butler/get-file-storing-info/`, options);
+      const json = tools.createServerResponse(node.address, await res.json());
+      assert.doesNotThrow(() => {
+        utils.validateSchema(schema.getFileStoringInfoButlerResponse(), json);
+      });
+    });
+  });
+
+  describe('/api/butler/get-file-links/', function () {
+    it('should return an auth error', async function () { 
+      const res = await fetch(`http://${node.address}/api/butler/get-file-links/`, { method: 'post' });
+      assert.equal(await res.status, 401);
+    });
+
+    it('should return a data error', async function () {
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());   
+      const res = await fetch(`http://${node.address}/api/butler/get-file-links/`, options);
+      assert.equal(res.status, 422);
+    });
+
+    it('should return the right schema', async function () {
+      const body = {
+        level: 1,
+        hash: 'hash'
+      };
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
+      const res = await fetch(`http://${node.address}/api/butler/get-file-links/`, options);
+      const json = tools.createServerResponse(node.address, await res.json());
+      assert.doesNotThrow(() => {
+        utils.validateSchema(schema.getFileLinksButlerResponse(), json);
+      });
+    });
+  });
+
+  describe('/api/butler/remove-file/', function () {
+    it('should return an auth error', async function () { 
+      const res = await fetch(`http://${node.address}/api/butler/remove-file/`, { method: 'post' });
+      assert.equal(await res.status, 401);
+    });
+
+    it('should return a data error', async function () { 
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());   
+      const res = await fetch(`http://${node.address}/api/butler/remove-file/`, options);
+      assert.equal(res.status, 422);
+    });
+
+    it('should return the right schema', async function () {
+      const body = {
+        level: 1,
+        hash: 'hash'
+      };
+      const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
+      const res = await fetch(`http://${node.address}/api/butler/remove-file/`, options);
+      const json = tools.createServerResponse(node.address, await res.json());
+      assert.doesNotThrow(() => {
+        utils.validateSchema(schema.getFileRemovalButlerResponse(), json);
       });
     });
   });
@@ -307,7 +367,7 @@ describe('routes', () => {
 
     it('should return the right schema', async function () {
       const body = {
-        ignoreAcception: true,
+        level: 0,
         info: {
           size: 1,
           hash: 'hash'
@@ -322,25 +382,25 @@ describe('routes', () => {
     });
   });
 
-  describe('/api/slave/get-file-link-info/', function () {
+  describe('/api/slave/get-file-links/', function () {
     it('should return an auth error', async function () { 
-      const res = await fetch(`http://${node.address}/api/slave/get-file-link-info/`, { method: 'post' });
+      const res = await fetch(`http://${node.address}/api/slave/get-file-links/`, { method: 'post' });
       assert.equal(await res.status, 401);
     });
 
     it('should return a data error', async function () {
       const options = node.createDefaultRequestOptions();   
-      const res = await fetch(`http://${node.address}/api/slave/get-file-link-info/`, options);
+      const res = await fetch(`http://${node.address}/api/slave/get-file-links/`, options);
       assert.equal(res.status, 422);
     });
 
     it('should return the right schema for empty link', async function () {
       const body = {
-        ignoreAcception: true,
+        level: 0,
         hash: 'hash'
       };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
-      const res = await fetch(`http://${node.address}/api/slave/get-file-link-info/`, options);      
+      const res = await fetch(`http://${node.address}/api/slave/get-file-links/`, options);      
       const json = tools.createServerResponse(node.address, await res.json());
       assert.doesNotThrow(() => {
         utils.validateSchema(schema.getFileLinksSlaveResponse(), json);
@@ -350,11 +410,11 @@ describe('routes', () => {
     it('should return the right schema for the existent link', async function () {
       const hash = await node.storeFile(Buffer.from('hello'));
       const body = {
-        ignoreAcception: true,
+        level: 0,
         hash
       };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
-      const res = await fetch(`http://${node.address}/api/slave/get-file-link-info/`, options);      
+      const res = await fetch(`http://${node.address}/api/slave/get-file-links/`, options);      
       const json = tools.createServerResponse(node.address, await res.json());
       assert.equal(json.link, await node.createFileLink(hash), 'check the string');
       assert.doesNotThrow(() => {
@@ -376,7 +436,10 @@ describe('routes', () => {
     });
 
     it('should return the right schema', async function () {
-      const body = { hash: 'hash' };
+      const body = { 
+        level: 0,
+        hash: 'hash'
+      };
       const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions({ body }));      
       const res = await fetch(`http://${node.address}/api/slave/remove-file/`, options);
       const json = tools.createServerResponse(node.address, await res.json());

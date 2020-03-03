@@ -4,17 +4,17 @@ module.exports = [
   /**
    * Get candidates to store the file
    * 
-   * @api {post} /api/master/get-file-storing-candidates
+   * @api {post} /api/master/get-file-storing-info
    * @apiParam {object} info
    * @apiParam {string} info.size
    * @apiParam {string} info.hash
    * @apiSuccess {object} - { candidates: ... }
    */
   { 
-    name: 'getFileStoringCandidates', 
+    name: 'getFileStoringInfo', 
     method: 'post',
-    url: '/get-file-storing-candidates', 
-    fn: controllers.getFileStoringCandidates
+    url: '/get-file-storing-info', 
+    fn: controllers.getFileStoringInfo
   },
 
   /**

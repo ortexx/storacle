@@ -1,5 +1,3 @@
-const errors = require('../../../../../errors');
-
 /**
  * Get the file storing info
  */
@@ -7,17 +5,9 @@ module.exports.getFileStoringInfo = node => {
   return async (req, res, next) => {
     try {
       const info = req.body.info || {};
-
-      if(!info.size) {
-        throw new errors.WorkError('"info.size" field is invalid', 'ERR_STORACLE_INVALID_SIZE_FIELD');
-      }
-
-      if(!info.hash) {
-        throw new errors.WorkError('"info.hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
-      }
-      
+      node.hashTest(info.hash);     
       const testInfo = Object.assign({}, info)
-      testInfo.storage = await node.getStorageInfo({ tempUsed: false, tempFree: false });
+      testInfo.storage = await node.getStorageInfo();
       
       res.send({ 
         free: testInfo.storage.free,
@@ -32,17 +22,13 @@ module.exports.getFileStoringInfo = node => {
 };
 
 /**
- * Get the file link info
+ * Get the file links
  */
-module.exports.getFileLinkInfo = node => {
+module.exports.getFileLinks = node => {
   return async (req, res, next) => {
     try {
-      const hash = req.body.hash;      
-
-      if(!hash) {
-        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
-      }
-
+      const hash = req.body.hash; 
+      node.hashTest(hash);
       return res.send({ link: await node.hasFile(hash)? await node.createFileLink(hash): '' });     
     }
     catch(err) {
@@ -58,18 +44,14 @@ module.exports.removeFile = node => {
   return async (req, res, next) => {
     try {
       const hash = req.body.hash;
-      
-      if(!hash) {
-        throw new errors.WorkError('"hash" field is invalid', 'ERR_STORACLE_INVALID_HASH_FIELD');
-      }
-      
+      node.hashTest(hash);
       const hasFile = await node.hasFile(hash);
 
       if(hasFile) {
         await node.removeFileFromStorage(hash);
       }
 
-      res.send({ removed: hasFile });
+      res.send({ removed: +hasFile });
     }
     catch(err) {
       next(err);

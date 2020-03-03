@@ -118,7 +118,7 @@ When you create an instance of the node you can pass options below. Only specifi
 
 * {number|string} __[task.cleanUpTempDirInterval="20s"]__ - temporary folder cleanup task interval.
 
-* {number|string} __[task.calculateStorageInfoInterval="2s"]__ - storage information calculaion task interval.
+* {number|string} __[task.calculateStorageInfoInterval="3s"]__ - storage information calculaion task interval.
 
 ## Client configuration
 
@@ -175,4 +175,4 @@ __Client.prototype.createRequestedFileLink()__ - сreate a requested file link. 
 
 ## Contribution
 
-If you face a bug or have an idea how to improve the library create an issue on github. In order to fix something or add new code yourself fork the library, make changes and create a pull request to the master branch. Don't forget about tests in this case. Also you can join [the project on github](https://github.com/ortexx/storacle/projects/1).
+If you face a bug or have an idea how to improve the library, create an issue on github. In order to fix something or add new code yourself fork the library, make changes and create a pull request to the master branch. Don't forget about tests in this case. Also you can join [the project on github](https://github.com/ortexx/storacle/projects/1).

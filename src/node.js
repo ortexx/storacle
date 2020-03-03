@@ -58,7 +58,7 @@ module.exports = (Parent) => {
         task: {
           cleanUpStorageInterval: '30s',
           cleanUpTempDirInterval: '20s',
-          calculateStorageInfoInterval: '2s'
+          calculateStorageInfoInterval: '3s'
         }
       }, options);
 
@@ -71,18 +71,18 @@ module.exports = (Parent) => {
       this.__dirNestingSize = 2;
       this.__dirNameLength = 1;
       this.__blockedFiles = {};
-    }    
+    }
 
     /**
-     * @see Node.prototype.init
+     * @see Node.prototype.initBeforeSync
      */
-    async init() {      
-      await super.init.apply(this, arguments); 
+    async initBeforeSync() {
       this.filesPath = path.join(this.storagePath, 'files');
       this.tempPath = path.join(this.storagePath, 'tmp');
       await fse.ensureDir(this.filesPath); 
       await fse.ensureDir(this.tempPath);
       await this.calculateStorageInfo();
+      return await super.initBeforeSync.apply(this, arguments);
     }
 
     /**
@@ -238,6 +238,7 @@ module.exports = (Parent) => {
      */
     async getFileStoringFilterOptions(info) {
       return {
+        uniq: 'address',
         fnCompare: await this.createSuscpicionComparisonFunction('storeFile', await this.createFileStoringComparisonFunction()),
         fnFilter: c => !c.existenceInfo && c.isAvailable,
         schema: schema.getFileStoringInfoSlaveResponse(),
@@ -263,6 +264,7 @@ module.exports = (Parent) => {
      */
     async getFileLinksFilterOptions() {
       return {
+        uniq: 'link',
         fnFilter: c => utils.isValidFileLink(c.link)
       }
     }
@@ -291,18 +293,18 @@ module.exports = (Parent) => {
           throw new errors.WorkError('This file cannot be added to the network', 'ERR_STORACLE_INVALID_FILE');
         }
 
-        const masterRequestTimeout = this.getRequestMastersTimeout(options);
-        let results = await this.requestMasters('get-file-storing-candidates', {
+        const masterRequestTimeout = await this.getRequestMasterTimeout();
+        let results = await this.requestNetwork('get-file-storing-info', {
           body: { info },
           timeout: timer(
             [masterRequestTimeout, this.options.request.fileStoringNodeTimeout],
             { min: masterRequestTimeout, grabFree: true }
           ),
-          responseSchema: schema.getFileStoringCandidatesMasterResponse({ networkOptimum: await this.getNetworkOptimum() }),
-          masterTimeout: options.masterTimeout,
-          slaveTimeout: options.slaveTimeout
+          responseSchema: schema.getFileStoringInfoMasterResponse({ 
+            networkOptimum: await this.getNetworkOptimum() 
+          })
         });
-        const existing = _.flatten(results).reduce((p, c) => p.concat(c.existing), []);
+        const existing = results.reduce((p, c) => p.concat(c.existing), []);        
         const dublicates = await this.getFileDuplicatesCount(info);
         const limit = dublicates - existing.length;
         
@@ -364,28 +366,45 @@ module.exports = (Parent) => {
         cache: true      
       }, options);
       let tempFile;
+      const streams = [];
+      const isStream = utils.isFileReadStream(file);
 
-      if(utils.isFileReadStream(file)) {
+      if(isStream) {
+        streams.push(file);
         const name = path.basename(file.path);
-        await fse.exists(path.join(this.tempPath, name)) && (tempFile = name);         
+        await fse.exists(path.join(this.tempPath, name)) && (tempFile = name);        
       }
 
-      options.serverOptions = address => ({
-        timeout: this.options.request.fileStoringNodeTimeout,
-        formData: _.merge({}, options.formData, {
-          file: address == (this.address && tempFile) || {
-            value: file,
-            options: {
-              filename: info.hash + (info.ext? '.' + info.ext: ''),
-              contentType: info.mime
-            }
-          }          
-        })
-      });
+      options.serverOptions = address => {
+        if(isStream) {
+          file = fs.createReadStream(file.path);
+          streams.push(file);
+        }
 
-      const result = await this.duplicateData(options.action || `store-file/${ info.hash }`, servers, options);
-      result && options.cache && await this.updateFileCache(result.hash, { link: result.link });
-      return result;
+        return {
+          timeout: this.options.request.fileStoringNodeTimeout,
+          formData: _.merge({}, options.formData, {
+            file: address == (this.address && tempFile) || {
+              value: file,
+              options: {
+                filename: info.hash + (info.ext? '.' + info.ext: ''),
+                contentType: info.mim
+              }
+            }
+          })
+        }
+      };
+
+      try {
+        const result = await this.duplicateData(options.action || `store-file/${ info.hash }`, servers, options);        
+        result && options.cache && await this.updateFileCache(result.hash, { link: result.link });
+        streams.forEach(s => s.destroy());
+        return result;
+      }
+      catch(err) {
+        streams.forEach(s => s.destroy());
+        throw err;
+      }
     }
     
     /**
@@ -397,11 +416,9 @@ module.exports = (Parent) => {
      * @returns {string[]}
      */
     async getFileLinks(hash, options = {}) {
-      let results = await this.requestMasters('get-file-links', {
+      let results = await this.requestNetwork('get-file-links', {
         body: { hash },
         timeout: options.timeout,
-        masterTimeout: options.masterTimeout,
-        slaveTimeout: options.slaveTimeout,
         responseSchema: schema.getFileLinksMasterResponse({ networkOptimum: await this.getNetworkOptimum() })
       });
 
@@ -461,11 +478,9 @@ module.exports = (Parent) => {
      * @returns {string}
      */
     async removeFile(hash, options = {}) {   
-      const result = await this.requestMasters('remove-file', {
+      const result = await this.requestNetwork('remove-file', {
         body: { hash },
-        timeout: options.timeout,
-        masterTimeout: options.masterTimeout,
-        slaveTimeout: options.slaveTimeout,
+        options: options.timeout,
         responseSchema: schema.getFileRemovalMasterResponse()
       });
 
@@ -1047,7 +1062,6 @@ module.exports = (Parent) => {
       this.options.file.responseCacheLifetime = utils.getMs(this.options.file.responseCacheLifetime);      
       this.options.storage.tempLifetime = utils.getMs(this.options.storage.tempLifetime);
       this.options.request.fileStoringNodeTimeout = utils.getMs(this.options.request.fileStoringNodeTimeout);
-      this.options.file.linkCache && (this.options.file.linkCache.lifetime = utils.getMs(this.options.file.linkCache.lifetime));
     }
 
     /**
@@ -1064,6 +1078,17 @@ module.exports = (Parent) => {
       }
 
       return path.join(this.filesPath, ...subs, hash);
+    }
+
+    /**
+     * Test the hash
+     * 
+     * @param {string} hash 
+     */
+    hashTest(hash) {
+      if(!hash || typeof hash != 'string') {
+        throw new errors.WorkError('Invalid hash', 'ERR_STORACLE_INVALID_HASH');
+      }
     }
   }
 };

@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "bin": {
@@ -63,7 +63,7 @@
     "node-fetch": "^2.6.0",
     "optimist": "^0.6.1",
     "splaytree": "^3.0.1",
-    "spreadable": ">=0.1.1"
+    "spreadable": ">=0.1.2"
   },
   "repository": {
     "type": "git",
