@@ -701,7 +701,6 @@ module.exports = (Parent) => {
         await this.iterateFiles((fp, stat) => (count++, size += stat.size));
         await this.db.setData('filesTotalSize', size);
         await this.db.setData('filesCount', count);
-        this.logger.info('Files info has been normalized'); 
       }
       catch(err) {
         throw err;
