@@ -16,9 +16,13 @@ midds.file = node => {
       if(!await node.hasFile(hash)) {
         throw new errors.NotFoundError('File not found');
       }
+      
+      if(req.headers['storacle-cache-check']) {
+        return res.send('');
+      }
 
       const cache = Math.ceil(node.options.file.responseCacheLifetime / 1000);
-      const filePath = await node.getFilePath(hash);
+      const filePath = node.getFilePath(hash);
       const info = await utils.getFileInfo(filePath, { hash: false });
       info.mime && res.setHeader("Content-Type", info.mime);
       cache && res.set('Cache-Control', `public, max-age=${cache}`);

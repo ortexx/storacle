@@ -19,7 +19,7 @@ const utils = Object.assign({}, require('spreadable/src/utils'));
  * @returns {Buffer}
  */
 utils.fetchFileToBuffer = async function (link, options = {}) {
-  options = Object.assign({ method: 'GET' }, options);
+  options = Object.assign({}, options, { method: 'GET' });
  
   try { 
     let result = await fetch(link, options);
@@ -40,10 +40,10 @@ utils.fetchFileToBuffer = async function (link, options = {}) {
  */
 utils.fetchFileToBlob = async function (link, options = {}) {
   const controller = new AbortController();
-  options = Object.assign({ 
+  options = Object.assign({}, options, { 
     method: 'GET',
     signal: controller.signal
-  }, options);
+  });
   const timer = this.getRequestTimer(options.timeout);
   let timeIsOver = false;
 
@@ -77,35 +77,37 @@ utils.fetchFileToBlob = async function (link, options = {}) {
  * @param {object} [options]
  */
 utils.fetchFileToPath = async function (filePath, link, options = {}) {
-  options = Object.assign({ method: 'GET' }, options);
+  options = Object.assign({}, options, { method: 'GET' });
   const timer = this.getRequestTimer(options.timeout);
+  let result;
 
-  return await new Promise(async (resolve, reject) => {
-    try {       
-      let result = await fetch(link, options);
-      const stream = fs.createWriteStream(filePath);
-      const timeout = timer();
-      let timeIsOver = false;
-      let timeoutObj;
+  try {       
+    result = await fetch(link, options);
+  }
+  catch(err) {
+    throw utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err;
+  } 
 
-      if(timeout) {
-        timeoutObj = setTimeout(() => {
-          timeIsOver = true;
-          stream.close();
-        }, timeout);
-      }
-      
-      result.body
-      .pipe(stream)
-      .on('error', reject)
-      .on('finish', () => {
-        clearTimeout(timeoutObj);
-        timeIsOver? reject(utils.createRequestTimeoutError()): resolve();
-      });
-    }   
-    catch(err) {
-      reject(utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err);
-    }  
+  return await new Promise((resolve, reject) => {
+    const stream = fs.createWriteStream(filePath);
+    const timeout = timer();
+    let timeIsOver = false;
+    let timeoutObj;
+
+    if(timeout) {
+      timeoutObj = setTimeout(() => {
+        timeIsOver = true;
+        stream.close();
+      }, timeout);
+    }
+    
+    result.body
+    .pipe(stream)
+    .on('error', reject)
+    .on('finish', () => {
+      clearTimeout(timeoutObj);
+      timeIsOver? reject(utils.createRequestTimeoutError()): resolve();
+    });
   });
 };
 

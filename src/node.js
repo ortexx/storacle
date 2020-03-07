@@ -695,16 +695,10 @@ module.exports = (Parent) => {
      */
     async normalizeFilesInfo() {
       let size = 0;
-      let count = 0;      
-
-      try {
-        await this.iterateFiles((fp, stat) => (count++, size += stat.size));
-        await this.db.setData('filesTotalSize', size);
-        await this.db.setData('filesCount', count);
-      }
-      catch(err) {
-        throw err;
-      }    
+      let count = 0;
+      await this.iterateFiles((fp, stat) => (count++, size += stat.size));
+      await this.db.setData('filesTotalSize', size);
+      await this.db.setData('filesCount', count); 
     }
 
     /**
@@ -1009,6 +1003,7 @@ module.exports = (Parent) => {
       try {
         const res = await fetch(link, this.createDefaultRequestOptions({ 
           method: 'HEAD',
+          headers: { 'storacle-cache-check': 'true' },
           timeout: this.options.request.cacheTimeout
         }));
 
@@ -1067,7 +1062,7 @@ module.exports = (Parent) => {
      * Get the file path
      * 
      * @param {string} hash 
-     * @returns {string} 
+     * @returns {string}
      */
     getFilePath(hash) {
       const subs = [];
