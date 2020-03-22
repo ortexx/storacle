@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const argv = require('optimist').argv;
+const argv = require('yargs').argv;
 const srcUtils = require('../src/utils');
 const utils = require('./utils');
 

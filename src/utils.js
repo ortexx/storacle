@@ -269,7 +269,7 @@ utils.isValidFileLink = function (link, options = {}) {
     return false;
   }
   
-  if(!info.pathname|| !info.pathname.match(new RegExp(`\\/${ options.action || 'file' }\\/[a-z0-9_]+(\\.[\\w\\d]+)*$`, 'i'))) {
+  if(!info.pathname|| !info.pathname.match(new RegExp(`\\/${ options.action || 'file' }\\/[a-z0-9_-]+(\\.[\\w\\d]+)*$`, 'i'))) {
     return false;
   }
 
