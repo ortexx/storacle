@@ -218,7 +218,7 @@ describe('Node', () => {
       assert.equal(await node.db.getData('filesCount'), filesCount);
     });
 
-    it('should store the file from a path', async () => {
+    it('should store the file from the path', async () => {
       const filePath = path.join(tools.tmpPath, '1.txt');
       await fse.writeFile(filePath, 'bye');
       const hash = await node.storeFile(filePath);

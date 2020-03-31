@@ -73,11 +73,11 @@ schema.getFileStoringResponse = function () {
   }
 };
 
-schema.getFileStoringInfoMasterResponse = function (options = {}) {
-  return this.getFileStoringInfoButlerResponse(options);
+schema.getFileStoringInfoMasterResponse = function () {
+  return this.getFileStoringInfoButlerResponse();
 }
 
-schema.getFileStoringInfoButlerResponse = function (options = {}) {
+schema.getFileStoringInfoButlerResponse = function () {
   const address = this.getAddress();
 
   return {
@@ -87,8 +87,7 @@ schema.getFileStoringInfoButlerResponse = function (options = {}) {
       candidates: {
         type: 'array',
         uniq: 'address',
-        items: this.getFileStoringInfoSlaveResponse(),
-        maxLength: options.networkOptimum
+        items: this.getFileStoringInfoSlaveResponse()
       },
       existing: {
         type: 'array',

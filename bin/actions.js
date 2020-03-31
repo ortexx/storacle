@@ -83,3 +83,12 @@ module.exports.removeFile = async node => {
   //eslint-disable-next-line no-console
   console.log(chalk.cyan(`The file "${hash}" has been removed`));
 };
+
+/**
+ * Flush the files cache
+ */
+module.exports.flushFilesCache = async node => {
+  await node.cacheFile.flush();
+  //eslint-disable-next-line no-console
+  console.log(chalk.cyan(`The files cache has been flushed`));
+};

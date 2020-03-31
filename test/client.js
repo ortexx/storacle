@@ -48,7 +48,7 @@ describe('Client', () => {
       assert.isTrue(await node.hasFile(hash));
     });
 
-    it('should store the file from a path', async () => {
+    it('should store the file from the path', async () => {
       const filePath = path.join(tools.tmpPath, '1.txt');
       await fse.writeFile(filePath, 'client-2');
       const hash = await client.storeFile(filePath);

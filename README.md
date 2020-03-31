@@ -112,7 +112,7 @@ When you create an instance of the node you can pass options below. Only specifi
 
 * {integer} __[file.linkCache.limit=50000]__ - maximum cache links.
 
-* {number|string} __[file.linkCache.lifetime="7d"]__ - cache link holding period.
+* {number|string} __[file.linkCache.lifetime="1d"]__ - cache link holding period.
 
 * {number|string} __[task.cleanUpStorageInterval="30s"]__ - storage cleanup task interval.
 

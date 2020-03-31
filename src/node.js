@@ -52,7 +52,7 @@ module.exports = (Parent) => {
           extBlacklist: [],
           linkCache: {
             limit: 50000,
-            lifetime: '7d'
+            lifetime: '1d'
           }         
         },
         task: {
@@ -300,9 +300,7 @@ module.exports = (Parent) => {
             [masterRequestTimeout, this.options.request.fileStoringNodeTimeout],
             { min: masterRequestTimeout, grabFree: true }
           ),
-          responseSchema: schema.getFileStoringInfoMasterResponse({ 
-            networkOptimum: await this.getNetworkOptimum() 
-          })
+          responseSchema: schema.getFileStoringInfoMasterResponse()
         });
         const existing = results.reduce((p, c) => p.concat(c.existing), []);        
         const dublicates = await this.getFileDuplicatesCount(info);

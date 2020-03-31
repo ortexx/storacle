@@ -9,7 +9,7 @@ module.exports.getFileStoringInfo = node => {
       const info = req.body.info || {};  
       node.hashTest(info.hash);
       const options = node.createRequestNetworkOptions(req.body, {
-        responseSchema: schema.getFileStoringInfoSlaveResponse()
+        responseSchema: schema.getFileStoringInfoButlerResponse()
       });
       const results = await node.requestNetwork('get-file-storing-info', options);      
       const existing = results.reduce((p, c) => p.concat(c.existing), []);
@@ -31,11 +31,11 @@ module.exports.getFileLinks = node => {
     try {      
       node.hashTest(req.body.hash);
       const options = node.createRequestNetworkOptions(req.body, {
-        responseSchema: schema.getFileLinksSlaveResponse()
+        responseSchema: schema.getFileLinksButlerResponse()
       });
       const results = await node.requestNetwork('get-file-links', options);
       const opts = await node.getFileLinksFilterOptions();
-      const links = await node.filterCandidatesMatrix(results.map(r => r.candidates), opts);
+      const links = await node.filterCandidatesMatrix(results.map(r => r.links), opts);
       return res.send({ links });
     }
     catch(err) {
@@ -52,7 +52,7 @@ module.exports.removeFile = node => {
     try {
       node.hashTest(req.body.hash);
       const options = node.createRequestNetworkOptions(req.body, {
-        responseSchema: schema.getFileRemovalSlaveResponse()
+        responseSchema: schema.getFileRemovalButlerResponse()
       });
       const results = await node.requestNetwork('remove-file', options);
       const removed = results.reduce((p, c) => p + c.removed, 0);
