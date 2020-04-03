@@ -70,17 +70,14 @@ module.exports = (Parent) => {
       this.CacheFileTransport = this.constructor.CacheFileTransport;
       this.__dirNestingSize = 2;
       this.__dirNameLength = 1;
-      this.__blockedFiles = {};
+      this.__blockQueue = {};
     }
 
     /**
      * @see Node.prototype.initBeforeSync
      */
     async initBeforeSync() {
-      this.filesPath = path.join(this.storagePath, 'files');
-      this.tempPath = path.join(this.storagePath, 'tmp');
-      await fse.ensureDir(this.filesPath); 
-      await fse.ensureDir(this.tempPath);
+      await this.createFolders();
       await this.calculateStorageInfo();
       return await super.initBeforeSync.apply(this, arguments);
     }
@@ -167,6 +164,18 @@ module.exports = (Parent) => {
       return _.merge(await super.getStatusInfo(pretty), storage, {
         filesCount: await this.db.getData('filesCount')
       });
+    }
+
+    /**
+     * Create the necessary folders
+     * 
+     * @async
+     */
+    async createFolders() {
+      this.filesPath = path.join(this.storagePath, 'files');
+      this.tempPath = path.join(this.storagePath, 'tmp');
+      await fse.ensureDir(this.filesPath);
+      await fse.ensureDir(this.tempPath);
     }
 
     /**
@@ -696,7 +705,7 @@ module.exports = (Parent) => {
       let count = 0;
       await this.iterateFiles((fp, stat) => (count++, size += stat.size));
       await this.db.setData('filesTotalSize', size);
-      await this.db.setData('filesCount', count); 
+      await this.db.setData('filesCount', count);
     }
 
     /**
@@ -789,23 +798,25 @@ module.exports = (Parent) => {
      * @returns {boolean}
      */
     async addFileToStorage(file, hash, options = {}) {
-      const sourcePath = file.path || file;
-      const stat = await fse.stat(sourcePath);
-      const destPath = this.getFilePath(hash);
-      const dir = path.dirname(destPath);
+      await this.withBlockingFile(hash, async () => {
+        const sourcePath = file.path || file;
+        const stat = await fse.stat(sourcePath);
+        const destPath = this.getFilePath(hash);
+        const dir = path.dirname(destPath);
 
-      try {
-        await fse.ensureDir(dir);
-        await fse[options.copy? 'copy': 'move'](sourcePath, destPath, { overwrite: true });
-        await this.db.setData('filesTotalSize', row => row.value + stat.size);
-        await this.db.setData('filesCount', row => row.value + 1);
-        utils.isFileReadStream(file) && file.destroy();
-      }
-      catch(err) {
-        utils.isFileReadStream(file) && file.destroy();
-        await this.normalizeDir(dir);
-        throw err;
-      }      
+        try {
+          await fse.ensureDir(dir);
+          await fse[options.copy? 'copy': 'move'](sourcePath, destPath, { overwrite: true });
+          await this.db.setData('filesTotalSize', row => row.value + stat.size);
+          await this.db.setData('filesCount', row => row.value + 1);
+          utils.isFileReadStream(file) && file.destroy();
+        }
+        catch(err) {
+          utils.isFileReadStream(file) && file.destroy();
+          await this.normalizeDir(dir);
+          throw err;
+        }
+      });
     }
 
     /**
@@ -815,23 +826,25 @@ module.exports = (Parent) => {
      * @param {string} hash
      */
     async removeFileFromStorage(hash) {
-      const filePath = this.getFilePath(hash);
-      const stat = await fse.stat(filePath);
-      let dir = path.dirname(filePath);
+      await this.withBlockingFile(hash, async () => {
+        const filePath = this.getFilePath(hash);
+        const stat = await fse.stat(filePath);
+        let dir = path.dirname(filePath);
 
-      try {
-        await fse.remove(filePath); 
-        await this.db.setData('filesTotalSize', row => row.value - stat.size);
-        await this.db.setData('filesCount', row => row.value - 1);
-        await this.normalizeDir(dir);
-      }
-      catch(err) {
-        await this.normalizeDir(dir);
+        try {
+          await fse.remove(filePath); 
+          await this.db.setData('filesTotalSize', row => row.value - stat.size);
+          await this.db.setData('filesCount', row => row.value - 1);
+          await this.normalizeDir(dir);
+        }
+        catch(err) {
+          await this.normalizeDir(dir);
 
-        if(err.code != 'ENOENT') {
-          throw err;
-        }        
-      }
+          if(err.code != 'ENOENT') {
+            throw err;
+          }        
+        }
+      });
     }
 
     /**
@@ -860,6 +873,40 @@ module.exports = (Parent) => {
       await fse.emptyDir(this.filesPath);
       await this.db.setData('filesTotalSize', 0);
       await this.db.setData('filesCount', 0);
+    }
+
+    /**
+     * Run the function blocking the file
+     * 
+     * @async
+     * @param {string} hash
+     * @param {function} fn 
+     * @returns {*}
+     */
+    async withBlockingFile(hash, fn) {
+      !this.__blockQueue[hash] && (this.__blockQueue[hash] = []);     
+      const queue = this.__blockQueue[hash];
+      
+      return new Promise((resolve, reject) => {
+        const handler = async () => {
+          let err;
+          let res;
+
+          try {
+            res = await fn();
+          }
+          catch(e) {
+            err = e;
+          }
+          
+          err? reject(err): resolve(res);
+          queue.shift();
+          queue.length? queue[0](): delete this.__blockQueue[hash];
+          
+        };
+        queue.push(handler);
+        queue.length <= 1 && handler();
+      });
     }
 
     /** 
