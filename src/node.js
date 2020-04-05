@@ -54,7 +54,7 @@ module.exports = (Parent) => {
           linkCache: {
             limit: 50000,
             lifetime: '1d'
-          }         
+          }
         },
         task: {
           cleanUpStorageInterval: '30s',

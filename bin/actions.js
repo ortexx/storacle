@@ -2,11 +2,12 @@ const chalk = require('chalk');
 const argv = require('yargs').argv;
 const srcUtils = require('../src/utils');
 const utils = require('./utils');
+const actions = Object.assign({}, require('spreadable/bin/actions'));
 
 /**
  * Normalize the files info
  */
-module.exports.normalizeFilesInfo = async node => {
+actions.normalizeFilesInfo = async node => {
   await node.normalizeFilesInfo();
   //eslint-disable-next-line no-console
   console.log(chalk.cyan('The files info has been normalized'));
@@ -15,7 +16,7 @@ module.exports.normalizeFilesInfo = async node => {
 /**
  * Clean up the storage
  */
-module.exports.cleanUpStorage = async node => {
+actions.cleanUpStorage = async node => {
   await node.cleanUpStorage();
   //eslint-disable-next-line no-console
   console.log(chalk.cyan('The storage has been cleaned up'));
@@ -24,7 +25,7 @@ module.exports.cleanUpStorage = async node => {
 /**
  * Export files to another node
  */
-module.exports.exportFiles = async node => {
+actions.exportFiles = async node => {
   await node.exportFiles(argv.address || argv.n);
   //eslint-disable-next-line no-console
   console.log(chalk.cyan('The files have been exported'));
@@ -33,7 +34,7 @@ module.exports.exportFiles = async node => {
 /**
  * Store the file
  */
-module.exports.storeFile = async node => {
+actions.storeFile = async node => {
   const filePath = utils.getAbsolutePath(argv.filePath || argv.f);
   const fileText = argv.t || argv.fileText;
   const hash = await node.storeFile(filePath || new Buffer(fileText));
@@ -44,7 +45,7 @@ module.exports.storeFile = async node => {
 /**
  * Get the file link
  */
-module.exports.getFileLink = async node => {
+actions.getFileLink = async node => {
   const hash = argv.h || argv.hash;
   const link = await node.getFileLink(hash);
 
@@ -59,7 +60,7 @@ module.exports.getFileLink = async node => {
 /**
  * Get the file to the path
  */
-module.exports.getFileToPath = async node => {
+actions.getFileToPath = async node => {
   const hash = argv.h || argv.hash;
   const filePath = utils.getAbsolutePath(argv.filePath || argv.f);
   const link = await node.getFileLink(hash);
@@ -77,7 +78,7 @@ module.exports.getFileToPath = async node => {
 /**
  * Remove the file
  */
-module.exports.removeFile = async node => {
+actions.removeFile = async node => {
   const hash = argv.hash || argv.h;
   await node.removeFile(hash);
   //eslint-disable-next-line no-console
@@ -87,8 +88,10 @@ module.exports.removeFile = async node => {
 /**
  * Flush the files cache
  */
-module.exports.flushFilesCache = async node => {
+actions.flushFilesCache = async node => {
   await node.cacheFile.flush();
   //eslint-disable-next-line no-console
   console.log(chalk.cyan(`The files cache has been flushed`));
 };
+
+module.exports = actions;
