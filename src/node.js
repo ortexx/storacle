@@ -44,6 +44,7 @@ module.exports = (Parent) => {
         },
         file: {          
           maxSize: '40%',
+          minSize: 0,
           preferredDublicates: 'auto',
           responseCacheLifetime: '7d',
           mimeWhitelist: [],
@@ -67,6 +68,7 @@ module.exports = (Parent) => {
       this.storageTempSize = 0;
       this.storageAutoCleanSize = 0;
       this.fileMaxSize = 0;
+      this.fileMinSize = 0;
       this.CacheFileTransport = this.constructor.CacheFileTransport;
       this.__dirNestingSize = 2;
       this.__dirNameLength = 1;
@@ -191,6 +193,7 @@ module.exports = (Parent) => {
       this.storageTempSize = this.options.storage.tempSize;
       this.storageAutoCleanSize = this.options.storage.autoCleanSize;
       this.fileMaxSize = this.options.file.maxSize;
+      this.fileMinSize = this.options.file.minSize;
       const available = info.available + used + tempDirInfo.size;
       
       if(typeof this.storageDataSize == 'string') {
@@ -228,9 +231,17 @@ module.exports = (Parent) => {
       if(typeof this.fileMaxSize == 'string') {
         this.fileMaxSize = Math.floor(available * parseFloat(this.fileMaxSize) / 100);
       }
+
+      if(typeof this.fileMinSize == 'string') {
+        this.fileMinSize = Math.floor(available * parseFloat(this.fileMinSize) / 100);
+      }
       
       if(this.fileMaxSize > this.storageDataSize) {
         throw new Error(`"file.maxSize" is greater than "storage.dataSize"`);
+      }
+
+      if(this.fileMaxSize < this.fileMinSize) {
+        throw new Error(`"file.maxSize" is less than "file.minSize"`);
       }
 
       if(this.calculateTempFileMinSize(this.fileMaxSize) > this.storageTempSize) {
@@ -541,7 +552,8 @@ module.exports = (Parent) => {
         tempAllowed: true,
         tempUsed: true,
         tempFree: true,
-        fileMaxSize: true
+        fileMaxSize: true,
+        fileMinSize: true
       }, data);
 
       const diskInfo = await utils.getDiskInfo(this.filesPath);      
@@ -567,6 +579,7 @@ module.exports = (Parent) => {
       data.tempUsed && (info.tempUsed = tempUsed);
       data.tempFree && (info.tempFree = this.storageTempSize - tempUsed);
       data.fileMaxSize && (info.fileMaxSize = this.fileMaxSize);
+      data.fileMinSize && (info.fileMinSize = this.fileMinSize);
       return info;
     }   
 
@@ -1016,6 +1029,10 @@ module.exports = (Parent) => {
         throw new errors.WorkError('File is too big', 'ERR_STORACLE_FILE_MAX_SIZE');
       }
 
+      if(info.size < this.fileMinSize) {
+        throw new errors.WorkError('File is too small', 'ERR_STORACLE_FILE_MIN_SIZE');
+      }
+
       if(mimeWhite.length && (!info.mime || mimeWhite.indexOf(info.mime) == -1)) {
         throw new errors.WorkError('File mime type is denied', 'ERR_STORACLE_FILE_MIME_TYPE');
       }
@@ -1098,6 +1115,7 @@ module.exports = (Parent) => {
       this.options.storage.tempSize = utils.getBytes(this.options.storage.tempSize);
       this.options.storage.autoCleanSize = utils.getBytes(this.options.storage.autoCleanSize);
       this.options.file.maxSize = utils.getBytes(this.options.file.maxSize); 
+      this.options.file.minSize = utils.getBytes(this.options.file.minSize); 
       this.options.file.responseCacheLifetime = utils.getMs(this.options.file.responseCacheLifetime);      
       this.options.storage.tempLifetime = utils.getMs(this.options.storage.tempLifetime);
       this.options.request.fileStoringNodeTimeout = utils.getMs(this.options.request.fileStoringNodeTimeout);

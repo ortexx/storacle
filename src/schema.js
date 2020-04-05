@@ -16,6 +16,7 @@ schema.getStatusResponse = function () {
       tempUsed: 'number',
       tempFree: 'number',
       fileMaxSize: 'number',
+      fileMinSize: 'number',
       filesCount: 'number'
     }
   })
@@ -34,6 +35,7 @@ schema.getStatusPrettyResponse = function () {
       tempUsed: 'string',
       tempFree: 'string',
       fileMaxSize: 'string',
+      fileMinSize: 'string'
     }    
   });
 };

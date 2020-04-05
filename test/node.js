@@ -45,11 +45,12 @@ describe('Node', () => {
       node.options.storage.tempSize = 1024;
       node.options.storage.autoCleanSize = 8;
       node.options.file.maxSize = 128;
+      node.options.file.minSize = 1;
       await node.calculateStorageInfo();
       assert.equal(node.storageDataSize, node.options.storage.dataSize, 'check "storage.dataSize"');
       assert.equal(node.storageTempSize, node.options.storage.tempSize, 'check "storage.tempSize"');
       assert.equal(node.storageAutoCleanSize, node.options.storage.autoCleanSize, 'check "storage.autoCleanSize"');
-      assert.equal(node.fileMaxSize, node.options.file.maxSize, 'check "file.maxSize"');
+      assert.equal(node.fileMaxSize, node.options.file.maxSize, 'check "file.minSize"');
     });
 
     it('should define the necessary variables as expected using a percentage', async () => {      
@@ -57,11 +58,13 @@ describe('Node', () => {
       node.options.storage.tempSize = '50% - 1b';
       node.options.storage.autoCleanSize = '10%';
       node.options.file.maxSize = '20%';
+      node.options.file.minSize = '10%';
       await node.calculateStorageInfo();
       assert.equal(node.storageDataSize, Math.floor(data.available / 2), 'check "storage.dataSize"');
       assert.equal(Math.floor(node.storageTempSize), Math.floor(node.storageDataSize) - 1, 'check "storage.tempSize"');
       assert.equal(Math.floor(node.storageAutoCleanSize), Math.floor(node.storageDataSize * 0.1), 'check "storage.autoCleanSize"');
       assert.equal(Math.floor(node.fileMaxSize), Math.floor(data.available * 0.2), 'check "file.maxSize"');
+      assert.equal(Math.floor(node.fileMinSize), Math.floor(data.available * 0.1), 'check "file.minSize"');
     });
 
     it('should throw "storage.dataSize" error', async () => {
@@ -134,6 +137,21 @@ describe('Node', () => {
       }
     });
 
+    it('should throw "file.maxSize" error because of "file.minSize"', async () => {
+      node.options.storage.dataSize = '30%';
+      node.options.storage.tempSize = '30%';
+      node.options.file.maxSize = '20%';
+      node.options.file.minSize = '25%';
+
+      try {
+        await node.calculateStorageInfo();
+        throw new Error('Fail');
+      }
+      catch(err) {
+        assert.isOk(err.message.includes('file.minSize'));
+      }
+    });
+
     it('should throw "dataSize + tempSize" error', async () => {
       node.options.storage.dataSize = '50%';
       node.options.storage.tempSize = '80%';
@@ -155,8 +173,8 @@ describe('Node', () => {
 
     before(() => {
       keys = [
-        'total', 'available', 'allowed',
-        'used', 'free', 'clean', 'fileMaxSize',
+        'total', 'available', 'allowed', 'used', 
+        'free', 'clean', 'fileMaxSize', 'fileMinSize',
         'tempAllowed', 'tempUsed', 'tempFree'
       ];
     });
@@ -580,6 +598,18 @@ describe('Node', () => {
       catch (err) {
         node.fileMaxSize = Infinity;
         assert.isOk(err.message.match('too big'));
+      }
+    });
+
+    it('should throw an error because of min size', async () => {
+      try {
+        node.fileMinSize = 2;
+        await node.fileAvailabilityTest({ hash: '1', size: node.fileMinSize - 1 });        
+        throw new Error('Fail');
+      } 
+      catch (err) {
+        node.fileMinSize = 0;
+        assert.isOk(err.message.match('too small'));
       }
     });
 
