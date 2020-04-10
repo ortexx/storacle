@@ -62,11 +62,11 @@ Look at the description of the [spreadable](https://github.com/ortexx/spreadable
 
 Nodes interact via the [spreadable](https://github.com/ortexx/spreadable/) mechanism. The file can be added to the network through any node. Files are saved entirely, not splitted into parts. After saving you get a hash of the file. With this hash you can later get it again, delete it or do something else. If possible, links to files are cached so if you work with the same file and in some other cases you will receive it immediately without re-traversing the network. For better reliability files can be duplicated. How exactly you can customize yourself. By default, each file tends to have its copies in amount of __Math.ceil(Math.sqrt(networkSize))__.
 
-## What are the requirements
-You must have [node-gyp](https://github.com/nodejs/node-gyp) to install dependencies.
-
 ## What are the limitations
 The number of files on one node is limited by the file system. The speed of receiving / saving in the network files is limited by spreadable protocol.
+
+## What are the requirements
+Look at the [spreadable requirements](https://github.com/ortexx/spreadable/#what-are-the-requirements).
 
 ## Where to use it
 
