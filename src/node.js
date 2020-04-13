@@ -816,16 +816,18 @@ module.exports = (Parent) => {
         const stat = await fse.stat(sourcePath);
         const destPath = this.getFilePath(hash);
         const dir = path.dirname(destPath);
+        const exists = await fse.exists(destPath);
 
         try {
           await fse.ensureDir(dir);
           await fse[options.copy? 'copy': 'move'](sourcePath, destPath, { overwrite: true });
-          await this.db.setData('filesTotalSize', row => row.value + stat.size);
-          await this.db.setData('filesCount', row => row.value + 1);
-          utils.isFileReadStream(file) && file.destroy();
+
+          if(!exists) {
+            await this.db.setData('filesTotalSize', row => row.value + stat.size);
+            await this.db.setData('filesCount', row => row.value + 1);
+          }          
         }
         catch(err) {
-          utils.isFileReadStream(file) && file.destroy();
           await this.normalizeDir(dir);
           throw err;
         }

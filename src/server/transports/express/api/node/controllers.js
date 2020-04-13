@@ -20,10 +20,10 @@ module.exports.storeFile = node => {
       }
        
       file.destroy();
-      const link = await node.createFileLink(info.hash);      
+      const link = await node.createFileLink(info.hash);     
 
       if(dublicates.length) {
-        file = fs.createReadStream(node.getFilePath(info.hash));        
+        file = fs.createReadStream(node.getFilePath(info.hash));
         node.duplicateFile(dublicates, file, info)
         .then(() => {
           file.destroy();
