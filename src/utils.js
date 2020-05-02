@@ -12,18 +12,18 @@ const utils = Object.assign({}, require('spreadable/src/utils'));
 
 /**
  * Fetch the file to a buffer
- * 
+ *
  * @async
  * @param {string} link
  * @param {object} [options]
- * @returns {Buffer}
+ * @returns {Promise<Buffer>}
  */
 utils.fetchFileToBuffer = async function (link, options = {}) {
   options = Object.assign({}, options, { method: 'GET' });
- 
-  try { 
+
+  try {
     let result = await fetch(link, options);
-    return await result.buffer();
+    return result.buffer();
   }
   catch(err) {
     throw utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err;
@@ -32,7 +32,7 @@ utils.fetchFileToBuffer = async function (link, options = {}) {
 
 /**
  * Fetch the file to a blob
- * 
+ *
  * @async
  * @param {string} link
  * @param {object} [options]
@@ -40,14 +40,14 @@ utils.fetchFileToBuffer = async function (link, options = {}) {
  */
 utils.fetchFileToBlob = async function (link, options = {}) {
   const controller = new AbortController();
-  options = Object.assign({}, options, { 
+  options = Object.assign({}, options, {
     method: 'GET',
     signal: controller.signal
   });
   const timer = this.getRequestTimer(options.timeout);
   let timeIsOver = false;
 
-  try {     
+  try {
     let result = await fetch(link, options);
     let timeoutObj;
     const timeout = timer();
@@ -58,7 +58,7 @@ utils.fetchFileToBlob = async function (link, options = {}) {
         controller.abort();
       }, timeout);
     }
-    
+
     const blob = await result.blob();
     timeoutObj && clearTimeout(timeoutObj);
     return blob;
@@ -70,7 +70,7 @@ utils.fetchFileToBlob = async function (link, options = {}) {
 
 /**
  * Fetch the file to the path
- * 
+ *
  * @async
  * @param {string} filePath
  * @param {string} link
@@ -81,12 +81,12 @@ utils.fetchFileToPath = async function (filePath, link, options = {}) {
   const timer = this.getRequestTimer(options.timeout);
   let result;
 
-  try {       
+  try {
     result = await fetch(link, options);
   }
   catch(err) {
     throw utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err;
-  } 
+  }
 
   return await new Promise((resolve, reject) => {
     const stream = fs.createWriteStream(filePath);
@@ -100,7 +100,7 @@ utils.fetchFileToPath = async function (filePath, link, options = {}) {
         stream.close();
       }, timeout);
     }
-    
+
     result.body
     .pipe(stream)
     .on('error', reject)
@@ -113,7 +113,7 @@ utils.fetchFileToPath = async function (filePath, link, options = {}) {
 
 /**
  * Check the file is fs.ReadStream or fse.ReadStream
- * 
+ *
  * @param {*} obj
  * @returns {boolean}
  */
@@ -123,9 +123,9 @@ utils.isFileReadStream = function (obj) {
 
 /**
  * Get the disk info
- * 
+ *
  * @async
- * @param {string}
+ * @param {string} dir
  * @returns {object}
  */
 utils.getDiskInfo = async function (dir) {
@@ -134,7 +134,7 @@ utils.getDiskInfo = async function (dir) {
 
 /**
  * Get the file info
- * 
+ *
  * @async
  * @param {string|Buffer|fs.ReadStream|Blob} file
  * @param {object} data
@@ -165,20 +165,20 @@ utils.getFileInfo = async function (file, data = {}) {
   }
   else if(typeof Buffer == 'function' && (file instanceof Buffer)) {
     data.size && (info.size = file.length);
-    data.mime && (info.mime = await this.getFileMimeType(file)); 
+    data.mime && (info.mime = await this.getFileMimeType(file));
     (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
     data.hash && (info.hash = await this.getFileHash(file));
   }
   else {
     throw new errors.WorkError('Wrong file format', 'ERR_STORACLE_WRONG_FILE');
-  } 
+  }
 
   return info;
 };
 
 /**
  * Get the file hash
- * 
+ *
  * @async
  * @param {string|Buffer|fs.ReadStream|Blob} file
  * @returns {string}
@@ -199,10 +199,10 @@ utils.getFileHash = async function (file) {
 
 /**
  * Get the file mime type
- * 
+ *
  * @async
- * @param {string|fs.ReadStream|Buffer} content 
- * @returns {string} 
+ * @param {string|fs.ReadStream|Buffer} content
+ * @returns {string}
  */
 utils.getFileMimeType = async function (content) {
   return await new Promise((resolve, reject) => {
@@ -214,12 +214,12 @@ utils.getFileMimeType = async function (content) {
 
       resolve(result? result.mime: 'text/plain');
     });
-  });    
+  });
 };
 
 /**
  * Convert the blob to a Buffer
- * 
+ *
  * @async
  * @param {Blob} blob
  * @returns {Buffer}
@@ -230,22 +230,22 @@ utils.blobToBuffer = async function (blob) {
 
     const fn = result => {
       reader.removeEventListener('loadend', fn);
-  
+
       if(result.error) {
         return reject(result.error);
       }
-  
+
       resolve(Buffer.from(reader.result));
     }
-  
+
     reader.addEventListener('loadend', fn);
     reader.readAsArrayBuffer(blob);
-  });  
+  });
 };
 
 /**
  * Check the file link is valid
- * 
+ *
  * @param {string} link
  * @param {object} [options]
  * @returns {boolean}
@@ -264,11 +264,11 @@ utils.isValidFileLink = function (link, options = {}) {
   if(!info.port || !this.isValidPort(info.port)) {
     return false;
   }
-  
+
   if(!info.protocol.match(/^https?:?$/)) {
     return false;
   }
-  
+
   if(!info.pathname|| !info.pathname.match(new RegExp(`\\/${ options.action || 'file' }\\/[a-z0-9_-]+(\\.[\\w\\d]+)*$`, 'i'))) {
     return false;
   }
