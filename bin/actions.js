@@ -36,7 +36,7 @@ actions.exportFiles = async node => {
  */
 actions.storeFile = async node => {
   const filePath = utils.getAbsolutePath(argv.filePath || argv.f);
-  const fileText = argv.t || argv.fileText;
+  const fileText = argv.fileText || argv.t;
   const hash = await node.storeFile(filePath || new Buffer(fileText));
   //eslint-disable-next-line no-console
   console.log(chalk.cyan(`The file with hash "${hash}" has been stored`));
@@ -46,7 +46,7 @@ actions.storeFile = async node => {
  * Get the file link
  */
 actions.getFileLink = async node => {
-  const hash = argv.h || argv.hash;
+  const hash = argv.hash || argv.h;
   const link = await node.getFileLink(hash);
 
   if(!link) {
@@ -61,7 +61,7 @@ actions.getFileLink = async node => {
  * Get the file to the path
  */
 actions.getFileToPath = async node => {
-  const hash = argv.h || argv.hash;
+  const hash = argv.hash || argv.h;
   const filePath = utils.getAbsolutePath(argv.filePath || argv.f);
   const link = await node.getFileLink(hash);
 
