@@ -11,13 +11,13 @@ module.exports = (Parent) => {
   return class ClientStoracle extends (Parent || Client) {
     static get utils () { return utils }
     static get errors () { return errors }
-    
+
     constructor(options = {}) {
       options = merge({
         request: {
           fileStoringTimeout: '2.05h',
           fileGettingTimeout: '1h',
-          fileRemovalTimeout: '10s',          
+          fileRemovalTimeout: '10s',
           fileLinkGettingTimeout: '10s'
         },
       }, options);
@@ -26,7 +26,7 @@ module.exports = (Parent) => {
 
     /**
      * Get the file link
-     * 
+     *
      * @async
      * @param {string} hash
      * @param {object} [options]
@@ -41,7 +41,7 @@ module.exports = (Parent) => {
 
     /**
      * Get the file links array
-     * 
+     *
      * @async
      * @param {string} hash
      * @param {object} [options]
@@ -56,31 +56,20 @@ module.exports = (Parent) => {
 
     /**
      * Get the file to a buffer
-     * 
+     *
      * @param {string} hash
      * @param {object} [options]
      * @returns {Buffer}
      */
     async getFileToBuffer(hash, options = {}) {
       this.envTest(false, 'getFileToBuffer');
-      const timeout = options.timeout || this.options.request.fileGettingTimeout;
-      const timer = this.createRequestTimer(timeout);
-
-      let result  = await this.request('get-file-link', Object.assign({}, options, {
-        body: { hash },
-        timeout: timer(this.options.request.fileLinkGettingTimeout)
-      }));
-      
-      if(!result.link) {
-        throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
-      }
-      
+      const { result, timer } = await this.getFileLinkAndTimer(hash, options);
       return await utils.fetchFileToBuffer(result.link, this.createDefaultRequestOptions({ timeout: timer() }));
     }
 
     /**
      * Get the file and save it to the path
-     * 
+     *
      * @async
      * @param {string} hash
      * @param {string} filePath
@@ -88,48 +77,51 @@ module.exports = (Parent) => {
      */
     async getFileToPath(hash, filePath, options = {}) {
       this.envTest(false, 'getFileToPath');
-      const timeout = options.timeout || this.options.request.fileGettingTimeout;
-      const timer = this.createRequestTimer(timeout);
-
-      let result  = await this.request('get-file-link', Object.assign({}, options, {
-        body: { hash },
-        timeout: timer(this.options.request.fileLinkGettingTimeout)
-      }));
-
-      if(!result.link) {
-        throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
-      }
- 
+      const { result, timer } = await this.getFileLinkAndTimer(hash, options);
       await utils.fetchFileToPath(filePath, result.link, this.createDefaultRequestOptions({ timeout: timer() }));
     }
 
     /**
      * Get file to a blob
-     * 
+     *
      * @param {string} hash
      * @param {object} [options]
-     * @returns {Blob} 
+     * @returns {Blob}
      */
     async getFileToBlob(hash, options = {}) {
       this.envTest(true, 'getFileToBlob');
+      const { result, timer } = await this.getFileLinkAndTimer(hash, options);
+      return utils.fetchFileToBlob(result.link, this.createDefaultRequestOptions({ timeout: timer() }));
+    }
+
+    /**
+     * Get the file link and timer
+     *
+     * @param {string} hash
+     * @param {object} options
+     * @returns {Object}
+     */
+    async getFileLinkAndTimer(hash, options) {
       const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
-
-      let result  = await this.request('get-file-link', Object.assign({}, options, {
+      const result  = await this.request('get-file-link', Object.assign({}, options, {
         body: { hash },
         timeout: timer(this.options.request.fileLinkGettingTimeout)
       }));
 
       if(!result.link) {
-        throw new errors.WorkError(`Link for hash "${hash}" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
+        throw new errors.WorkError(`Link for hash "${ hash }" is not found`, 'ERR_STORACLE_NOT_FOUND_LINK');
       }
-      
-      return await utils.fetchFileToBlob(result.link, this.createDefaultRequestOptions({ timeout: timer() }));
+
+      return {
+        result,
+        timer
+      }
     }
 
     /**
      * Store the file to the storage
-     * 
+     *
      * @async
      * @param {string|Buffer|fs.ReadStream|Blob|File} file
      * @param {object} [options]
@@ -168,7 +160,7 @@ module.exports = (Parent) => {
 
     /**
      * Remove the file
-     * 
+     *
      * @async
      * @param {string} hash
      * @param {object} [options]
@@ -183,19 +175,19 @@ module.exports = (Parent) => {
 
     /**
      * Create a deferred file link
-     * 
-     * @param {string} hash 
-     * @param {object} options 
+     *
+     * @param {string} hash
+     * @param {object} options
      * @returns {string}
      */
     createRequestedFileLink(hash, options = {}) {
-      return this.createRequestUrl(`request-file/${hash}`, options);
+      return this.createRequestUrl(`request-file/${ hash }`, options);
     }
 
     /**
      * Prepare the options
      */
-    prepareOptions() {   
+    prepareOptions() {
       super.prepareOptions();
       this.options.request.fileGettingTimeout = utils.getMs(this.options.request.fileGettingTimeout);
       this.options.request.fileStoringTimeout = utils.getMs(this.options.request.fileStoringTimeout);
