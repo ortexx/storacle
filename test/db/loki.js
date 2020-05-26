@@ -9,7 +9,7 @@ describe('DatabaseLokiStoracle', () => {
   describe('instance creation', function () {
     it('should create an instance', function () { 
       assert.doesNotThrow(() => loki = new DatabaseLokiStoracle(this.node, {
-        filename: tools.getDbFilePath(this.node.port)
+        filename: tools.getDbFilePath(this.node)
       }));    
     });
   });
@@ -20,7 +20,7 @@ describe('DatabaseLokiStoracle', () => {
     });  
     
     it('should create the db file', async function () {    
-      assert.isTrue(await fse.exists(tools.getDbFilePath(this.node.port)));
+      assert.isTrue(await fse.pathExists(tools.getDbFilePath(this.node)));
     });
   });  
 
@@ -42,7 +42,7 @@ describe('DatabaseLokiStoracle', () => {
     });
     
     it('should remove the db file', async function () {
-      assert.isFalse(await fse.exists(tools.getDbFilePath(this.node.port)));
+      assert.isFalse(await fse.pathExists(tools.getDbFilePath(this.node)));
     });
   });
 });

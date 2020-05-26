@@ -390,7 +390,7 @@ module.exports = (Parent) => {
       if(isStream) {
         streams.push(file);
         const name = path.basename(file.path);
-        await fse.exists(path.join(this.tempPath, name)) && (tempFile = name);
+        await fse.pathExists(path.join(this.tempPath, name)) && (tempFile = name);
       }
 
       options.serverOptions = address => {
@@ -555,7 +555,6 @@ module.exports = (Parent) => {
         fileMaxSize: true,
         fileMinSize: true
       }, data);
-
       const diskInfo = await utils.getDiskInfo(this.filesPath);
       const info = {};
       let used;
@@ -615,7 +614,7 @@ module.exports = (Parent) => {
             await fn(filePath, stat);
           }
           catch(err) {
-            if(err.code != 'ENOENT') {
+            if(!['ENOENT', 'EINVAL'].includes(err.code)) {
               throw err;
             }
           }
@@ -734,16 +733,13 @@ module.exports = (Parent) => {
       options = _.merge({
         strict: false
       }, options);
-
       let success = 0;
       let fail = 0;
       const timer = this.createRequestTimer(options.timeout);
-
       await this.requestServer(address, `/ping`, {
         method: 'GET',
         timeout: timer(this.options.request.pingTimeout) || this.options.request.pingTimeout
       });
-
       await this.iterateFiles(async (filePath) => {
         const info = await utils.getFileInfo(filePath);
         let file;
@@ -816,7 +812,7 @@ module.exports = (Parent) => {
         const stat = await fse.stat(sourcePath);
         const destPath = this.getFilePath(hash);
         const dir = path.dirname(destPath);
-        const exists = await fse.exists(destPath);
+        const exists = await fse.pathExists(destPath);
 
         try {
           await fse.ensureDir(dir);
@@ -870,12 +866,19 @@ module.exports = (Parent) => {
     async normalizeDir(dir) {
       const filesPath = path.normalize(this.filesPath);
 
-      while(dir.length > filesPath.length) {
-        if(!((await fse.readdir(dir)).length)) {
-          await fse.remove(dir);
+      while(dir.length > filesPath.length) {        
+        try {
+          const files = await fse.readdir(dir);
+          !files.length && await fse.remove(dir);
+          dir = path.dirname(dir);
         }
+        catch(err) {
+          if(['ENOENT', 'EINVAL'].includes(err.code)) {
+            return;
+          }
 
-        dir = path.dirname(dir);
+          throw err;
+        }
       }
     }
 
@@ -886,6 +889,7 @@ module.exports = (Parent) => {
      */
     async emptyStorage() {
       await fse.emptyDir(this.filesPath);
+      await fse.emptyDir(this.tempPath);
       await this.db.setData('filesTotalSize', 0);
       await this.db.setData('filesCount', 0);
     }
@@ -1070,7 +1074,6 @@ module.exports = (Parent) => {
           headers: { 'storacle-cache-check': 'true' },
           timeout: this.options.request.cacheTimeout
         }));
-
         return res.status >= 200 && res.status < 300;
       }
       catch(err) {

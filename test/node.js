@@ -22,7 +22,7 @@ describe('Node', () => {
     });
 
     it('should create the storage', async () => {
-      assert.isTrue(await fse.exists(tools.getStoragePath(node.port)));
+      assert.isTrue(await fse.pathExists(tools.getStoragePath(node.port)));
     });
   });
 
@@ -227,7 +227,7 @@ describe('Node', () => {
     it('should store the file from a buffer', async () => {
       const hash = await node.storeFile(Buffer.from('hello'));
       filesCount++;
-      assert.isTrue(await fse.exists(node.getFilePath(hash)), 'check the file');
+      assert.isTrue(await fse.pathExists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), filesCount), 'check the count';
     });
 
@@ -241,7 +241,7 @@ describe('Node', () => {
       await fse.writeFile(filePath, 'bye');
       const hash = await node.storeFile(filePath);
       filesCount++;
-      assert.isTrue(await fse.exists(node.getFilePath(hash)), 'check the file');
+      assert.isTrue(await fse.pathExists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), filesCount), 'check the count';
     });
 
@@ -250,7 +250,7 @@ describe('Node', () => {
       await fse.writeFile(filePath, 'goodbye');
       const hash = await node.storeFile(fse.createReadStream(filePath));
       filesCount++;
-      assert.isTrue(await fse.exists(node.getFilePath(hash)), 'check the file');
+      assert.isTrue(await fse.pathExists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), filesCount), 'check the count';
     });
 
@@ -259,7 +259,7 @@ describe('Node', () => {
       await fse.writeFile(filePath, 'morning');
       const hash = await node.storeFile(await fse.createReadStream(filePath));
       filesCount++;
-      assert.isTrue(await fse.exists(node.getFilePath(hash)), 'check the file');
+      assert.isTrue(await fse.pathExists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), filesCount), 'check the count';
     });
   });
@@ -312,7 +312,7 @@ describe('Node', () => {
       const filesCount = await node.db.getData('filesCount');
       const res = await node.removeFile(hash);
       assert.equal(res.removed, 1, 'check the result');
-      assert.isFalse(await fse.exists(node.getFilePath(hash)), 'check the file');
+      assert.isFalse(await fse.pathExists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), filesCount - 1, 'check the count');
     });
   });
@@ -337,7 +337,7 @@ describe('Node', () => {
       const file = fse.createReadStream(filePath);
       const hash = await utils.getFileHash(file);
       await node.addFileToStorage(file, hash);
-      assert.isTrue(await fse.exists(node.getFilePath(hash)), 'check the file');
+      assert.isTrue(await fse.pathExists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), 1, 'check the count');
       assert.equal(await node.db.getData('filesTotalSize'), stat.size, 'check the size');
     });
@@ -347,7 +347,7 @@ describe('Node', () => {
     it('should remove the file', async () => {
       const hash = await utils.getFileHash(Buffer.from('hello'));
       await node.removeFileFromStorage(hash);
-      assert.isFalse(await fse.exists(node.getFilePath(hash)), 'check the file');
+      assert.isFalse(await fse.pathExists(node.getFilePath(hash)), 'check the file');
       assert.equal(await node.db.getData('filesCount'), 0, 'check the count');
       assert.equal(await node.db.getData('filesTotalSize'), 0, 'check the size');
     });
@@ -362,13 +362,13 @@ describe('Node', () => {
       hash = await node.storeFile(Buffer.from('hello'));
       dir = path.dirname(node.getFilePath(hash));
       await node.normalizeDir(dir);
-      assert.isTrue(await fse.exists(dir));
+      assert.isTrue(await fse.pathExists(dir));
     });
 
     it('should remove the directory', async () => {
       await fse.remove(node.getFilePath(hash));
       await node.normalizeDir(dir);
-      assert.isFalse(await fse.exists(dir), 'check the directory');
+      assert.isFalse(await fse.pathExists(dir), 'check the directory');
       assert.isNotOk((await fse.readdir(node.filesPath)).length, 'check the files path');
     });
   });
@@ -707,7 +707,7 @@ describe('Node', () => {
     });
 
     it('should not remove the storage', async () => {
-      assert.isTrue(await fse.exists(tools.getStoragePath(node.port)));
+      assert.isTrue(await fse.pathExists(tools.getStoragePath(node.port)));
     });
   });
 
@@ -717,7 +717,7 @@ describe('Node', () => {
     });
 
     it('should create the storage', async () => {
-      assert.isTrue(await fse.exists(tools.getStoragePath(node.port)));
+      assert.isTrue(await fse.pathExists(tools.getStoragePath(node.port)));
     });
   });
 
@@ -727,7 +727,7 @@ describe('Node', () => {
     });
 
     it('should remove the storage', async () => {
-      assert.isFalse(await fse.exists(tools.getStoragePath(node.port)));
+      assert.isFalse(await fse.pathExists(tools.getStoragePath(node.port)));
     });
   });
 });

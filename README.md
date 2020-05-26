@@ -9,8 +9,7 @@ const Node = require('storacle').Node;
   try {
     const node = new Node({
       port: 4000,
-      hostname: 'localhost',
-      initialNetworkAddress: 'localhost:4000'
+      hostname: 'localhost'
     });
     await node.init();
   }

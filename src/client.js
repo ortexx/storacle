@@ -57,6 +57,7 @@ module.exports = (Parent) => {
     /**
      * Get the file to a buffer
      *
+     * @async
      * @param {string} hash
      * @param {object} [options]
      * @returns {Buffer}
