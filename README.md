@@ -1,6 +1,6 @@
 # [Storacle](https://github.com/ortexx/storacle/) [alpha] [![npm version](https://badge.fury.io/js/storacle.svg)](https://badge.fury.io/js/storacle)
 
-Storacle is a decentralized file storage based on the [spreadable](https://github.com/ortexx/spreadable/) protocol.
+Storacle is a decentralized file storage based on [the spreadable protocol](https://github.com/ortexx/spreadable/).
 
 ```javascript
 const Node = require('storacle').Node;
@@ -52,20 +52,20 @@ const Client = require('storacle').Client;
 The example above shows the simplest use of the library. But the server can be flexibly configured.
 
 ## Browser client
-You can also use the client in a browser. Look at the description of the [spreadable](https://github.com/ortexx/spreadable/#how-to-use-the-client-in-a-browser) library. In window you have __window.ClientStoracle__ instead of __window.ClientSpreadable__. The prepared file name is __storacle.client.js__.
+You can also use the client in a browser. Look at the description of [the spreadable library](https://github.com/ortexx/spreadable/#how-to-use-the-client-in-a-browser). In window you have __window.ClientStoracle__ instead of __window.ClientSpreadable__. The prepared file name is __storacle.client.js__.
 
 ## How to use it via the command line
-Look at the description of the [spreadable](https://github.com/ortexx/spreadable/#how-to-use-it-via-the-command-line) library. You only need to change everywhere **spreadable** word to **storacle**.
+Look at the description of [the spreadable library](https://github.com/ortexx/spreadable/#how-to-use-it-via-the-command-line). You only need to change everywhere **spreadable** word to **storacle**.
 
 ## How it works
 
-Nodes interact via the [spreadable](https://github.com/ortexx/spreadable/) mechanism. The file can be added to the network through any node. Files are saved entirely, not splitted into parts. After saving you get a hash of the file. With this hash you can later get it again, delete it or do something else. If possible, links to files are cached so if you work with the same file and in some other cases you will receive it immediately without re-traversing the network. For better reliability files can be duplicated. How exactly you can customize yourself. By default, each file tends to have its copies in amount of __Math.ceil(Math.sqrt(networkSize))__.
+Nodes interact via [the spreadable mechanism](https://github.com/ortexx/spreadable/). The file can be added to the network through any node. Files are saved entirely, not splitted into parts. After saving you get a hash of the file. With this hash you can later get it again, delete it or do something else. If possible, links to files are cached so if you work with the same file and in some other cases you will receive it immediately without re-traversing the network. For better reliability files can be duplicated. How exactly you can customize yourself. By default, each file tends to have its copies in amount of __Math.ceil(Math.sqrt(networkSize))__.
 
 ## What are the limitations
 The number of files on one node is limited by the file system. The speed of receiving / saving in the network files is limited by spreadable protocol.
 
 ## What are the requirements
-Look at the [spreadable requirements](https://github.com/ortexx/spreadable/#what-are-the-requirements).
+Look at [the spreadable requirements](https://github.com/ortexx/spreadable/#what-are-the-requirements).
 
 ## Where to use it
 
