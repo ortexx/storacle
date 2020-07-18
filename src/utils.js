@@ -256,7 +256,7 @@ utils.isValidFileLink = function (link, options = {}) {
   }
 
   const info = urlib.parse(link);
-
+  
   if(!info.hostname || !this.isValidHostname(info.hostname)) {
     return false;
   }
