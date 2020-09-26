@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "bin": {
@@ -47,7 +47,7 @@
     "husky": "^4.3.0",
     "mocha": "^7.2.0",
     "terser-webpack-plugin": "^2.3.8",
-    "webpack": "^4.44.1",
+    "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
@@ -63,7 +63,7 @@
     "mime": "^2.4.6",
     "node-fetch": "^2.6.1",
     "splaytree": "^3.0.1",
-    "spreadable": "^0.1.23",
+    "spreadable": "^0.1.24",
     "yargs": "^15.4.1"
   },
   "repository": {

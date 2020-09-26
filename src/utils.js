@@ -163,7 +163,7 @@ utils.getFileInfo = async function (file, data = {}) {
     (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
     data.hash && (info.hash = await this.getFileHash(filePath));
   }
-  else if(typeof Buffer == 'function' && (file instanceof Buffer)) {
+  else if(typeof Buffer == 'function' && Buffer.isBuffer(file)) {
     data.size && (info.size = file.length);
     data.mime && (info.mime = await this.getFileMimeType(file));
     (data.mime && data.ext) && (info.ext = mime.getExtension(info.mime));
@@ -190,7 +190,7 @@ utils.getFileHash = async function (file) {
   else if(this.isFileReadStream(file) || typeof file == 'string') {
     return await hasha.fromFile(file.path || file, { algorithm: 'md5' });
   }
-  else if(typeof Buffer == 'function' && (file instanceof Buffer)) {
+  else if(typeof Buffer == 'function' && Buffer.isBuffer(file)) {
     return await hasha(file, { algorithm: 'md5' });
   }
 
@@ -207,7 +207,7 @@ utils.getFileHash = async function (file) {
 utils.getFileMimeType = async function (content) {
   return await new Promise((resolve, reject) => {
     this.isFileReadStream(content) && (content = content.path);
-    detectMime[content instanceof Buffer? 'fromBuffer': 'fromFile'](content, (err, result) => {
+    detectMime[Buffer.isBuffer(content)? 'fromBuffer': 'fromFile'](content, (err, result) => {
       if (err) {
         return reject(reject);
       }

@@ -721,7 +721,7 @@ module.exports = (Parent) => {
     }
 
     /**
-     * Export files to another server
+     * Export all files to another server
      *
      * @async
      * @param {string} address
@@ -765,7 +765,7 @@ module.exports = (Parent) => {
       });
 
       if(!success && !fail) {
-        this.logger.info(`There are not files to export`);
+        this.logger.info(`There haven't been files to export`);
       }
       else if(!fail) {
         this.logger.info(`${success} file(s) have been exported`);
