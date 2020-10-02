@@ -53,7 +53,7 @@ module.exports = (Parent) => {
           extBlacklist: [],
           linkCache: {
             limit: 50000,
-            lifetime: '1d'
+            lifetime: '2h'
           }
         },
         task: {
