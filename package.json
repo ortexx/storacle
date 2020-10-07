@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "bin": {

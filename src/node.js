@@ -97,7 +97,6 @@ module.exports = (Parent) => {
      */
     async prepareServices() {
       await super.prepareServices();
-      await this.prepareTask();
       await this.prepareCache();      
     }
 
@@ -118,7 +117,7 @@ module.exports = (Parent) => {
      * @async
      */
     async prepareTask() {
-      await super.prepareTask();
+      await super.prepareTask.apply(this, arguments);
 
       if(!this.task) {
         return;
