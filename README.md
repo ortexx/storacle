@@ -1,4 +1,4 @@
-# [Storacle](https://github.com/ortexx/storacle/) [alpha] [![npm version](https://badge.fury.io/js/storacle.svg)](https://badge.fury.io/js/storacle)
+# [Storacle](https://github.com/ortexx/storacle/) [alpha] [![npm version](https://badge.fury.io/js/storacle.svg)](https://badge.fury.io/js/storacle) [![Build status](https://github.com/ortexx/storacle/workflows/build/badge.svg)](https://github.com/ortexx/storacle/actions)
 
 Storacle is a decentralized file storage based on [the spreadable protocol](https://github.com/ortexx/spreadable/).
 
