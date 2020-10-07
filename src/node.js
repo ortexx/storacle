@@ -82,21 +82,13 @@ module.exports = (Parent) => {
       await this.createFolders();
       await this.calculateStorageInfo();
       return await super.initBeforeSync.apply(this, arguments);
-    }
-
-    /**
-     * @see Node.prototype.destroy
-     */
-    async destroy() {
-      await fse.remove(this.storagePath);
-      super.destroy();
-    }
+    }   
 
     /**
      * @see Node.prototype.prepareServices
      */
     async prepareServices() {
-      await super.prepareServices();
+      await super.prepareServices.apply(this, arguments);
       await this.prepareCache();      
     }
 
@@ -134,30 +126,6 @@ module.exports = (Parent) => {
       if(this.options.task.calculateStorageInfoInterval) {
         await this.task.add('calculateStorageInfo', this.options.task.calculateStorageInfoInterval, () => this.calculateStorageInfo());
       }
-    }
-
-    /**
-     * @see Node.prototype.initServices
-     */
-    async initServices() {
-      await super.initServices();
-      this.cacheFile && await this.cacheFile.init();
-    }
-
-    /**
-     * @see Node.prototype.deinitServices
-     */
-    async deinitServices() {
-      await super.deinitServices();
-      this.cacheFile && await this.cacheFile.deinit();
-    }
-
-    /**
-     * @see Node.prototype.deinitServices
-     */
-    async destroyServices() {
-      await super.destroyServices();
-      this.cacheFile && await this.cacheFile.destroy();
     }
 
      /**
