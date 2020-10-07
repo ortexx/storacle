@@ -8,9 +8,10 @@ describe('DatabaseLokiStoracle', () => {
   
   describe('instance creation', function () {
     it('should create an instance', function () { 
-      assert.doesNotThrow(() => loki = new DatabaseLokiStoracle(this.node, {
+      assert.doesNotThrow(() => loki = new DatabaseLokiStoracle({
         filename: tools.getDbFilePath(this.node)
-      }));    
+      }));  
+      loki.node = this.node;  
     });
   });
 

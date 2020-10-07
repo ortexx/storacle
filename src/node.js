@@ -97,10 +97,28 @@ module.exports = (Parent) => {
      */
     async prepareServices() {
       await super.prepareServices();
+      await this.prepareTask();
+      await this.prepareCache();      
+    }
 
+    /**
+     * Prepare the cache service
+     * 
+     * @async
+     */
+    async prepareCache() {
       if(this.options.file.linkCache) {
-        this.cacheFile = new this.CacheFileTransport(this, 'file', this.options.file.linkCache);
+        this.cacheFile = await this.addService('file', new this.CacheFileTransport(this.options.file.linkCache));
       }
+    }
+
+    /**
+     * Prepare the task service
+     * 
+     * @async
+     */
+    async prepareTask() {
+      await super.prepareTask();
 
       if(!this.task) {
         return;

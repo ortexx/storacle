@@ -13,13 +13,14 @@
   "homepage": "https://github.com/ortexx/storacle",
   "scripts": {
     "eslint": "eslint src bin test",
-    "test": "mocha ./test/index.js --timeout=10000",
+    "test": "mocha ./test/index.js --timeout=15000",
     "build-client": "webpack --config=webpack.client.js",
-    "build-client-prod": "cross-env NODE_ENV=production webpack --config=webpack.client.js"
+    "build-client-prod": "cross-env NODE_ENV=production webpack --config=webpack.client.js",
+    "build-ci": "npm run eslint && npm run test && npm run build-client-prod"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run eslint && npm run test && npm run build-client-prod && git add ./dist/*"
+      "pre-commit": "npm run build-ci && git add ./dist/*"
     }
   },
   "keywords": [
@@ -63,7 +64,7 @@
     "mime": "^2.4.6",
     "node-fetch": "^2.6.1",
     "splaytree": "^3.0.1",
-    "spreadable": "~0.2.0",
+    "spreadable": "~0.2.1",
     "yargs": "^15.4.1"
   },
   "repository": {
@@ -71,6 +72,6 @@
     "url": "https://github.com/ortexx/storacle"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=10.0.0"
   }
 }

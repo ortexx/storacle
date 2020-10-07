@@ -7,7 +7,8 @@ describe('ServerExpressStoracle', () => {
 
   describe('instance creation', function () {
     it('should create an instance', function () { 
-      assert.doesNotThrow(() => server = new ServerExpressStoracle(this.node));  
+      assert.doesNotThrow(() => server = new ServerExpressStoracle());  
+      server.node = this.node; 
       nodeServer = this.node.server;
       this.node.server = server; 
     });
