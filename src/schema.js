@@ -77,7 +77,7 @@ schema.getFileStoringResponse = function () {
 
 schema.getFileStoringInfoMasterResponse = function () {
   return this.getFileStoringInfoButlerResponse();
-}
+};
 
 schema.getFileStoringInfoButlerResponse = function () {
   const address = this.getAddress();
@@ -121,10 +121,9 @@ schema.getFileStoringInfoSlaveResponse = function () {
   }
 };
 
-
 schema.getFileLinksMasterResponse = function () {
   return this.getFileLinksButlerResponse();
-}
+};
 
 schema.getFileLinksButlerResponse = function () {
   return {

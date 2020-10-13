@@ -493,7 +493,7 @@ describe('Node', () => {
       const filePath = path.join(node.tempPath, '2.txt');
       await fse.writeFile(filePath, 'hi');
       const stat = await fse.stat(filePath);
-      node.options.storage.tempLifetime = Date.now() - stat.atimeMs + 10;
+      node.options.storage.tempLifetime = Date.now() - stat.atimeMs + 100;
       await node.cleanUpTempDir();
       const files = await fse.readdir(node.tempPath);
       assert.equal(files.length, 1);
