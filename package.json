@@ -64,7 +64,7 @@
     "mime": "^2.4.6",
     "node-fetch": "^2.6.1",
     "splaytree": "^3.0.1",
-    "spreadable": "^0.2.8",
+    "spreadable": "^0.2.9",
     "yargs": "^15.4.1"
   },
   "repository": {
