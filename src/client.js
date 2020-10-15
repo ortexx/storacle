@@ -3,12 +3,15 @@ const Client = require('spreadable/src/client')();
 const fs = require('fs');
 const utils = require('./utils');
 const errors = require('./errors');
+const pack = require('../package.json');
 
 module.exports = (Parent) => {
   /**
    * Class to manage client requests to the network
    */
   return class ClientStoracle extends (Parent || Client) {
+    static get version () { return pack.version }
+    static get codename () { return pack.name }
     static get utils () { return utils }
     static get errors () { return errors }
 

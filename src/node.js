@@ -21,7 +21,7 @@ module.exports = (Parent) => {
    */
   return class NodeStoracle extends (Parent || Node) {
     static get version () { return pack.version }
-    static get codename () { return 'storacle' }
+    static get codename () { return pack.name }
     static get DatabaseTransport () { return DatabaseLokiStoracle }
     static get ServerTransport () { return ServerExpressStoracle }
     static get CacheFileTransport () { return CacheDatabaseStoracle }
