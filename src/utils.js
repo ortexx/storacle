@@ -209,7 +209,7 @@ utils.getFileMimeType = async function (content) {
     this.isFileReadStream(content) && (content = content.path);
     detectMime[Buffer.isBuffer(content)? 'fromBuffer': 'fromFile'](content, (err, result) => {
       if (err) {
-        return reject(reject);
+        return reject(err);
       }
 
       resolve(result? result.mime: 'text/plain');
