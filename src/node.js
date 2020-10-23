@@ -1075,7 +1075,7 @@ module.exports = (Parent) => {
       ]);
     }
 
-     /**
+    /**
      * Get the node temp folder availability
      *
      * @async

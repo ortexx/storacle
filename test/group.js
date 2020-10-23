@@ -24,7 +24,7 @@ describe('group communication', () => {
     
     client = new Client(await tools.createClientOptions({ address: nodes[0].address }));
     await client.init();
-    await tools.nodesSync(nodes, nodes.length * 2); 
+    await tools.nodesSync(nodes, nodes.length * 3); 
     buffer = Buffer.from('hello');
     duplicates = await nodes[0].getFileDuplicatesCount();
   });
