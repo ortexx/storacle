@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "bin": {
@@ -43,9 +43,9 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
     "chai": "^4.2.0",
-    "cross-env": "^7.0.2",
+    "cross-env": "^7.0.3",
     "eslint": "^6.8.0",
-    "husky": "^4.3.0",
+    "husky": "^4.3.6",
     "mocha": "^7.2.0",
     "terser-webpack-plugin": "^2.3.8",
     "webpack": "^4.44.2",
@@ -61,10 +61,10 @@
     "fs-extra": "^9.0.1",
     "hasha": "^4.0.1",
     "lodash": "^4.17.20",
-    "mime": "^2.4.6",
+    "mime": "^2.4.7",
     "node-fetch": "^2.6.1",
-    "splaytree": "^3.0.1",
-    "spreadable": "^0.2.11",
+    "splaytree": "^3.1.0",
+    "spreadable": "^0.2.12",
     "yargs": "^15.4.1"
   },
   "repository": {
