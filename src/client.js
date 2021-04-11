@@ -108,7 +108,7 @@ module.exports = (Parent) => {
     async getFileLinkAndTimer(hash, options) {
       const timeout = options.timeout || this.options.request.fileGettingTimeout;
       const timer = this.createRequestTimer(timeout);
-      const result  = await this.request('get-file-link', Object.assign({}, options, {
+      const result = await this.request('get-file-link', Object.assign({}, options, {
         body: { hash },
         timeout: timer(this.options.request.fileLinkGettingTimeout)
       }));
