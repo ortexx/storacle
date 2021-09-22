@@ -2,6 +2,8 @@
 
 Storacle is a decentralized file storage based on [the spreadable protocol](https://github.com/ortexx/spreadable/).
 
+There is [an article here](https://ortex.medium.com/storacle-a-decentralized-file-storage-3f0c5c57591c) with an explanation. 
+
 ```javascript
 const Node = require('storacle').Node;
 
@@ -49,7 +51,7 @@ const Client = require('storacle').Client;
 })();
 ```
 
-The example above shows the simplest use of the library. But the server can be flexibly configured.
+The example above shows the simplest usage of the library. But the server can be flexibly configured.
 
 ## Browser client
 You can also use the client in a browser. Look at the description of [the spreadable library](https://github.com/ortexx/spreadable/#how-to-use-the-client-in-a-browser). In window you have __window.ClientStoracle__ instead of __window.ClientSpreadable__. The prepared file name is __storacle.client.js__.
