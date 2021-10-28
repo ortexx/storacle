@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "bin": {
@@ -13,7 +13,7 @@
   "homepage": "https://github.com/ortexx/storacle",
   "scripts": {
     "eslint": "eslint src bin test",
-    "test": "mocha ./test/index.js --timeout=15000",
+    "test": "mocha ./test/index.js --timeout=20000",
     "build-client": "webpack --config=webpack.client.js",
     "build-client-prod": "cross-env NODE_ENV=production webpack --config=webpack.client.js",
     "build-ci": "npm run eslint && npm run test && npm run build-client-prod"
@@ -50,7 +50,7 @@
     "eslint-webpack-plugin": "^2.5.3",
     "husky": "^4.3.8",
     "mini-css-extract-plugin": "^1.4.1",
-    "mocha": "^7.2.0",
+    "mocha": "^9.1.3",
     "node-polyfill-webpack-plugin": "^1.1.0",
     "terser-webpack-plugin": "^5.0.0",
     "webpack": "^5.31.2",
@@ -70,7 +70,7 @@
     "mime": "^2.5.2",
     "node-fetch": "^2.6.1",
     "splaytree": "^3.1.0",
-    "spreadable": "^0.2.19"
+    "spreadable": "^0.2.20"
   },
   "repository": {
     "type": "git",
