@@ -176,4 +176,23 @@ schema.getFileRemovalSlaveResponse = function () {
   }
 };
 
+schema.getNetworkFilesCountMasterResponse = function () {
+  return this.getNetworkFilesCountButlerResponse();
+}
+
+schema.getNetworkFilesCountButlerResponse = function () {
+  return this.getNetworkFilesCountSlaveResponse();
+};
+
+schema.getNetworkFilesCountSlaveResponse = function () {
+  return {
+    type: 'object',
+    props: {
+      count: 'number',
+      address: this.getAddress()
+    },
+    strict: true
+  }
+};
+
 module.exports = schema;

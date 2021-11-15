@@ -478,7 +478,7 @@ module.exports = (Parent) => {
      * @async
      * @param {string} hash
      * @param {object} [options]
-     * @returns {string}
+     * @returns {object}
      */
     async removeFile(hash, options = {}) {
       const result = await this.requestNetwork('remove-file', {
@@ -488,6 +488,21 @@ module.exports = (Parent) => {
       });
 
       return { removed: result.reduce((p, c) => p + c.removed, 0) };
+    }
+
+    /**
+     * Get the network files count
+     * 
+     * @async
+     * @param {object} [options]
+     * @returns {number}
+     */
+     async getNetworkFilesCount(options = {}) {
+      const result = await this.requestNetwork('get-network-files-count', {
+        timeout: options.timeout,
+        responseSchema: schema.getNetworkFilesCountMasterResponse()
+      });
+      return result.reduce((p, c) => p + c.count, 0);
     }
 
     /**

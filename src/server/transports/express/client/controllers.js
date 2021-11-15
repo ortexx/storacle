@@ -110,3 +110,17 @@ module.exports.removeFile = node => {
     }
   }
 };
+
+/**
+ * Get the network files count
+ */
+ module.exports.getNetworkFilesCount = node => {
+  return async (req, res, next) => {
+    try {
+      res.send({ count: await node.getNetworkFilesCount(node.prepareClientMessageOptions(req.body)) });
+    }
+    catch(err) {
+      next(err);
+    } 
+  }   
+};

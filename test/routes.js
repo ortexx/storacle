@@ -191,6 +191,67 @@ describe('routes', () => {
     });
   });
 
+  describe('/client/get-network-files-count/', function () {
+    it('should return an auth error', async function () { 
+      const res = await fetch(`http://${node.address}/client/get-network-files-count/`, { method: 'post' });
+      assert.equal(await res.status, 401);
+    });
+
+    it('should get the right count', async function () {    
+      const res = await fetch(`http://${node.address}/client/get-network-files-count/`, client.createDefaultRequestOptions());
+      const json = tools.createServerResponse(node.address, await res.json());
+      assert.equal(json.count, await node.db.getData('filesCount'));
+    });
+  }); 
+
+  describe('/api/master/get-network-files-count/', function () {
+    it('should return an auth error', async function () { 
+      const res = await fetch(`http://${node.address}/api/master/get-network-files-count/`, { method: 'post' });
+      assert.equal(await res.status, 401);
+    });
+
+    it('should return the right schema', async function () {    
+      const options = node.createDefaultRequestOptions();      
+      const res = await fetch(`http://${node.address}/api/master/get-network-files-count/`, options);
+      const json = tools.createServerResponse(node.address, await res.json());
+      assert.doesNotThrow(() => {
+        utils.validateSchema(schema.getNetworkFilesCountMasterResponse(), json);
+      });
+    });
+  });
+
+  describe('/api/butler/get-network-files-count/', function () {
+    it('should return an auth error', async function () { 
+      const res = await fetch(`http://${node.address}/api/butler/get-network-files-count/`, { method: 'post' });
+      assert.equal(await res.status, 401);
+    });
+
+    it('should return the right schema', async function () {    
+      const options = node.createDefaultRequestOptions();      
+      const res = await fetch(`http://${node.address}/api/butler/get-network-files-count/`, options);
+      const json = tools.createServerResponse(node.address, await res.json());
+      assert.doesNotThrow(() => {
+        utils.validateSchema(schema.getNetworkFilesCountButlerResponse(), json);
+      });
+    });
+  });
+
+  describe('/api/slave/get-network-files-count/', function () {
+    it('should return an auth error', async function () { 
+      const res = await fetch(`http://${node.address}/api/slave/get-network-files-count/`, { method: 'post' });
+      assert.equal(await res.status, 401);
+    });
+
+    it('should return the right schema', async function () {    
+      const options = node.createDefaultRequestOptions();      
+      const res = await fetch(`http://${node.address}/api/slave/get-network-files-count/`, options);
+      const json = tools.createServerResponse(node.address, await res.json());
+      assert.doesNotThrow(() => {
+        utils.validateSchema(schema.getNetworkFilesCountSlaveResponse(), json);
+      });
+    });
+  });
+
   describe('/api/master/get-file-storing-info/', function () {
     it('should return an auth error', async function () { 
       const res = await fetch(`http://${node.address}/api/master/get-file-storing-info/`, { method: 'post' });

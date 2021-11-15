@@ -41,5 +41,16 @@ module.exports = [
     method: 'post', 
     url: '/remove-file',
     fn: controllers.removeFile
+  },  
+  /**
+   * Get the network files count
+   * 
+   * @api {post} /api/butler/get-network-files-count
+   */
+   { 
+    name: 'getNetworkFilesCount',
+    method: 'post', 
+    url: '/get-network-files-count',
+    fn: controllers.getNetworkFilesCount
   }
 ];

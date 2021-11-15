@@ -85,5 +85,16 @@ module.exports = [
       midds.requestQueueClient,
       controllers.removeFile
     ]
+  },
+  /**
+   * Get the network files count
+   * 
+   * @api {post} /client/get-network-files-count
+   */
+  { 
+    name: 'getNetworkFilesCount',
+    method: 'post', 
+    url: '/get-network-files-count',
+    fn: controllers.getNetworkFilesCount
   }
 ];

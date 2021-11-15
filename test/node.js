@@ -317,6 +317,13 @@ describe('Node', () => {
     });
   });
 
+  describe('.getNetworkFilesCount()', function () {
+    it('should get the right count', async function () {
+      const count = await node.getNetworkFilesCount();
+      assert.equal(count, await node.db.getData('filesCount'));
+    });
+  });
+
   describe('.emptyStorage()', () => {
     it('should remove all files', async () => {
       await node.storeFile(Buffer.from('hello'));

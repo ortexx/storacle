@@ -137,6 +137,13 @@ describe('Client', () => {
     });
   });
 
+  describe('.getNetworkFilesCount()', function () {
+    it('should get the right count', async function () {
+      const count = await client.getNetworkFilesCount();
+      assert.equal(count, await node.db.getData('filesCount'));
+    });
+  });
+
   describe('.createRequestedFileLink()', () => {
     it('should return the right link', async () => {
       const hash = 'hash';

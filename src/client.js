@@ -28,6 +28,17 @@ module.exports = (Parent) => {
     }
 
     /**
+     * Get the network files count
+     * 
+     * @async
+     * @param {object} [options]
+     * @returns {number}
+     */
+    async getNetworkFilesCount(options = {}) {
+      return (await this.request('get-network-files-count', options)).count;
+    }
+
+    /**
      * Get the file link
      *
      * @async

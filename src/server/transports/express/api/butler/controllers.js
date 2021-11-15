@@ -62,3 +62,22 @@ module.exports.removeFile = node => {
     } 
   }   
 };
+
+/**
+ * Get the network files count
+ */
+ module.exports.getNetworkFilesCount = node => {
+  return async (req, res, next) => {
+    try {
+      const options = node.createRequestNetworkOptions(req.body, {
+        responseSchema: schema.getNetworkFilesCountSlaveResponse()
+      });
+      const results = await node.requestNetwork('get-network-files-count', options);
+      const count = results.reduce((p, c) => p + c.count, 0);     
+      return res.send({ count });
+    }
+    catch(err) {
+      next(err);
+    } 
+  }   
+};

@@ -122,4 +122,16 @@ describe('group communication', () => {
 
     assert.isOk(count >= length * duplicates);
   });
+
+  it('should get the network files count', async () => {
+    let count = 0;  
+    let res = await client.getNetworkFilesCount();
+
+    for(let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      count += await node.db.getData('filesCount');
+    }
+
+    assert.equal(count, res);
+  });
 });
