@@ -70,7 +70,7 @@
     "mime": "^2.5.2",
     "node-fetch": "^2.6.1",
     "splaytree": "^3.1.0",
-    "spreadable": "^0.2.27"
+    "spreadable": "https://github.com/metasound/spreadable.git"
   },
   "repository": {
     "type": "git",

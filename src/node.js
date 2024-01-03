@@ -244,7 +244,7 @@ module.exports = (Parent) => {
     async getFileStoringFilterOptions(info) {
       return {
         uniq: 'address',
-        fnCompare: await this.createSuscpicionComparisonFunction('storeFile', await this.createFileStoringComparisonFunction()),
+        fnCompare: await this.createSuspicionComparisonFunction('storeFile', await this.createFileStoringComparisonFunction()),
         fnFilter: c => !c.existenceInfo && c.isAvailable,
         schema: schema.getFileStoringInfoSlaveResponse(),
         limit: await this.getFileDuplicatesCount(info)
