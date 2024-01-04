@@ -1,7 +1,7 @@
 const errors = require('../../../errors');
 const utils = require('../../../utils');
 const formData = require("express-form-data");
-const fs = require("fs");
+const fse = require("fs-extra");
 const path = require("path");
 const midds = Object.assign({}, require("spreadable/src/server/transports/express/midds"));
 
@@ -27,7 +27,7 @@ midds.file = node => {
       info.mime && res.setHeader("Content-Type", info.mime);
       cache && res.set('Cache-Control', `public, max-age=${cache}`);
       res.setHeader("Content-Length", info.size);
-      const stream = fs.createReadStream(filePath);
+      const stream = fse.createReadStream(filePath);
       stream.on('error', next).pipe(res);
     }
     catch(err) {
@@ -53,7 +53,7 @@ midds.prepareFileToStore = node => {
         }
 
         try {
-          file = fs.createReadStream(path.join(node.tempPath, file));
+          file = fse.createReadStream(path.join(node.tempPath, file));
         }
         catch(err) {
           throw invalidFileErr;

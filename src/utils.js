@@ -1,12 +1,10 @@
 const mime = require('mime');
 const hasha = require('hasha');
 const detectMime = require('detect-file-type');
-const disk = require('diskusage');
 const fse = require('fs-extra');
 const stream = require('stream');
 const fetch = require('node-fetch');
 const urlib = require('url');
-const fs = require('fs');
 const errors = require('./errors');
 const utils = Object.assign({}, require('spreadable/src/utils'));
 
@@ -89,7 +87,7 @@ utils.fetchFileToPath = async function (filePath, link, options = {}) {
   }
 
   return await new Promise((resolve, reject) => {
-    const stream = fs.createWriteStream(filePath);
+    const stream = fse.createWriteStream(filePath);
     const timeout = timer();
     let timeIsOver = false;
     let timeoutObj;
@@ -112,7 +110,7 @@ utils.fetchFileToPath = async function (filePath, link, options = {}) {
 };
 
 /**
- * Check the file is fs.ReadStream or fse.ReadStream
+ * Check the file is fse.ReadStream or fse.ReadStream
  *
  * @param {*} obj
  * @returns {boolean}
@@ -129,14 +127,20 @@ utils.isFileReadStream = function (obj) {
  * @returns {object}
  */
 utils.getDiskInfo = async function (dir) {
-  return await disk.check(dir);
+  try {
+    const stats = await fse.promises.statfs(dir);
+    return {available: stats.bsize*stats.bavail, free: stats.bsize*stats.bfree, total: stats.bsize*stats.blocks}
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
 
 /**
  * Get the file info
  *
  * @async
- * @param {string|Buffer|fs.ReadStream|Blob} file
+ * @param {string|Buffer|fse.ReadStream|Blob} file
  * @param {object} data
  * @returns {object}
  */
@@ -180,7 +184,7 @@ utils.getFileInfo = async function (file, data = {}) {
  * Get the file hash
  *
  * @async
- * @param {string|Buffer|fs.ReadStream|Blob} file
+ * @param {string|Buffer|fse.ReadStream|Blob} file
  * @returns {string}
  */
 utils.getFileHash = async function (file) {
@@ -201,7 +205,7 @@ utils.getFileHash = async function (file) {
  * Get the file mime type
  *
  * @async
- * @param {string|fs.ReadStream|Buffer} content
+ * @param {string|fse.ReadStream|Buffer} content
  * @returns {string}
  */
 utils.getFileMimeType = async function (content) {
