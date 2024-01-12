@@ -1,1 +1,1 @@
-module.exports = Object.assign({}, require('spreadable/src/errors'));
+module.exports = Object.assign({}, require('spreadable-ms/src/errors'));

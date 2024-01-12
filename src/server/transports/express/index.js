@@ -1,4 +1,4 @@
-const ServerExpress = require('spreadable/src/server/transports/express')();
+const ServerExpress = require('spreadable-ms/src/server/transports/express')();
 const routes = require('./routes');
 const routesClient = require('./client/routes');
 const routesApi = require('./api/routes');

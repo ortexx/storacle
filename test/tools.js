@@ -1,4 +1,4 @@
-const _tools = require('spreadable/test/tools');
+const _tools = require('spreadable-ms/test/tools');
 const tools = Object.assign({}, _tools);
 const path = require('path');
 

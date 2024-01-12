@@ -3,7 +3,7 @@ const utils = require('../../../utils');
 const formData = require("express-form-data");
 const fse = require("fs-extra");
 const path = require("path");
-const midds = Object.assign({}, require("spreadable/src/server/transports/express/midds"));
+const midds = Object.assign({}, require("spreadable-ms/src/server/transports/express/midds"));
 
 /**
  * Provide files receiving

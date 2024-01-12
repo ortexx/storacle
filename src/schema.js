@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const utils = require('./utils');
-const _schema = require('spreadable/src/schema');
+const _schema = require('spreadable-ms/src/schema');
 const schema = Object.assign({}, _schema);
 
 schema.getStatusResponse = function () {

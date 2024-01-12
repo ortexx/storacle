@@ -1,4 +1,4 @@
-const DatabaseLoki = require('spreadable/src/db/transports/loki')();
+const DatabaseLoki = require('spreadable-ms/src/db/transports/loki')();
 
 module.exports = (Parent) => {
   /**

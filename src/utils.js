@@ -6,7 +6,7 @@ const stream = require('stream');
 const fetch = require('node-fetch');
 const urlib = require('url');
 const errors = require('./errors');
-const utils = Object.assign({}, require('spreadable/src/utils'));
+const utils = Object.assign({}, require('spreadable-ms/src/utils'));
 
 /**
  * Fetch the file to a buffer
