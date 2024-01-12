@@ -1,5 +1,5 @@
 const merge = require('lodash/merge');
-const Client = require('spreadable/src/client')();
+const Client = require('spreadable-ms/src/client')();
 const fs = require('fs');
 const utils = require('./utils');
 const errors = require('./errors');

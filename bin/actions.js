@@ -2,7 +2,7 @@ const chalk = require('chalk');
 const argv = require('yargs').argv;
 const srcUtils = require('../src/utils');
 const utils = require('./utils');
-const actions = Object.assign({}, require('spreadable/bin/actions'));
+const actions = Object.assign({}, require('spreadable-ms/bin/actions'));
 
 /**
  * Normalize the files info

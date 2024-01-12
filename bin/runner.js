@@ -1,1 +1,1 @@
-module.exports = require('spreadable/bin/runner');
+module.exports = require('spreadable-ms/bin/runner');

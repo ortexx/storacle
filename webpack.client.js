@@ -1,6 +1,6 @@
 const path = require('path');
 const merge = require('lodash/merge');
-const spWebpackConfig = require('spreadable/webpack.client.js');
+const spWebpackConfig = require('spreadable-ms/webpack.client.js');
 
 module.exports = (options = {}, wp) => {
   options = merge({
