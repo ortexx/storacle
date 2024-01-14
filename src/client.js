@@ -1,6 +1,6 @@
 const merge = require('lodash/merge');
 const Client = require('spreadable-ms/src/client')();
-const fs = require('fs');
+const fse = require('fs-extra');
 const utils = require('./utils');
 const errors = require('./errors');
 const pack = require('../package.json');
@@ -138,7 +138,7 @@ module.exports = (Parent) => {
      * Store the file to the storage
      *
      * @async
-     * @param {string|Buffer|fs.ReadStream|Blob|File} file
+     * @param {string|Buffer|fse.ReadStream|Blob|File} file
      * @param {object} [options]
      */
     async storeFile(file, options = {}) {
@@ -148,7 +148,7 @@ module.exports = (Parent) => {
         const info = await utils.getFileInfo(file);
 
         if(typeof file == 'string') {
-          file = fs.createReadStream(file);
+          file = fse.createReadStream(file);
         }
 
         const result = await this.request('store-file', Object.assign({}, options, {

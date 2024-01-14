@@ -1,6 +1,5 @@
 const path = require('path');
 const url = require('url');
-const fs = require('fs');
 const fse = require('fs-extra');
 const fetch = require('node-fetch');
 const _ = require('lodash');
@@ -278,7 +277,7 @@ module.exports = (Parent) => {
      * Store the file to the network
      *
      * @async
-     * @param {string|Buffer|fs.ReadStream} file
+     * @param {string|Buffer|fse.ReadStream} file
      * @param {object} [options]
      * @returns {string}
      */
@@ -289,7 +288,7 @@ module.exports = (Parent) => {
         const timer = this.createRequestTimer(options.timeout);
 
         if(typeof file == 'string') {
-          file = fs.createReadStream(file);
+          file = fse.createReadStream(file);
         }
 
         const info = await utils.getFileInfo(file);
@@ -358,7 +357,7 @@ module.exports = (Parent) => {
      *
      * @async
      * @param {string[]} servers
-     * @param {fs.ReadStream|Buffer} file
+     * @param {fse.ReadStream|Buffer} file
      * @param {object} info
      * @param {object} [options]
      * @returns {object}
@@ -380,7 +379,7 @@ module.exports = (Parent) => {
 
       options.serverOptions = address => {
         if(isStream) {
-          file = fs.createReadStream(file.path);
+          file = fse.createReadStream(file.path);
           streams.push(file);
         }
 
@@ -745,7 +744,7 @@ module.exports = (Parent) => {
         let file;
 
         try {
-          file = fs.createReadStream(filePath);
+          file = fse.createReadStream(filePath);
           await this.duplicateFile([address], file, info, { timeout: timer() });
           success++;
           file.destroy();
@@ -801,7 +800,7 @@ module.exports = (Parent) => {
      * Add the file to the storage
      *
      * @async
-     * @param {fs.ReadStream|string} file
+     * @param {fse.ReadStream|string} file
      * @param {string} hash
      * @param {string} [options]
      * @returns {boolean}
