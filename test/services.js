@@ -1,21 +1,25 @@
-const Node = require('../src/node')();
-const tools = require('./tools');
+import node from "../src/node.js";
+import tools from "./tools.js";
+import loki from "./db/loki.js";
+import express from "./server/express.js";
 
-describe('services', () => {
-  before(async function () {
-    this.node = new Node(await tools.createNodeOptions({ server: false }));
-    await this.node.init();
-  });  
+const Node = node();
 
-  after(async function () {
-    await this.node.destroy();
-  });  
-  
-  describe('db', () => {
-    require('./db/loki');    
-  });
+export default function () {
+    describe('services', () => {
+        before(async function () {
+            this.node = new Node(await tools.createNodeOptions({ server: false }));
+            await this.node.init();
+        });
+        after(async function () {
+            await this.node.destroy();
+        });
+        describe('db', () => {
+            describe('loki', loki.bind(this));
 
-  describe('server', () => {
-    require('./server/express');    
-  });
-});
+        });
+        describe('server', () => {
+            describe('express', express.bind(this));
+        });
+    });
+}

@@ -1,1 +1,2 @@
-module.exports = Object.assign({}, require('spreadable-ms/src/errors'));
+import * as errors from "spreadable-ms/src/errors.js";
+export default errors;

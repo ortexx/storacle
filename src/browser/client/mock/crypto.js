@@ -1,3 +1,3 @@
-const createHash = require('create-hash/browser');
+import createHash from "create-hash/browser.js";
 const crypto = { createHash };
-module.exports = crypto;
+export default crypto;

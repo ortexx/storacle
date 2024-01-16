@@ -1,13 +1,12 @@
-const midds = require('./midds');
-
-module.exports = [
-  {
-    name: 'file',
-    method: 'get',
-    url: '/file/:hash',
-    fn: node => ([
-      midds.networkAccess(node),
-      midds.file(node)
-    ])
-  }
+import midds from "./midds.js";
+export default [
+    {
+        name: 'file',
+        method: 'get',
+        url: '/file/:hash',
+        fn: node => ([
+            midds.networkAccess(node),
+            midds.file(node)
+        ])
+    }
 ];

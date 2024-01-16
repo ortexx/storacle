@@ -143,7 +143,7 @@ When you create an instance of the client you can pass options below. Only speci
 ## Client interface
 
 async __Client.prototype.storeFile()__ - add file to the network.
-  * {string|fs.ReadStream|Buffer|Blob} __file__ - any file
+  * {string|fse.ReadStream|Buffer|Blob} __file__ - any file
   * {object} __[options]__ - storing options
   * {number} __[options.timeout]__ - storing timeout
 
