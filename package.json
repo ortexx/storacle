@@ -1,6 +1,6 @@
 {
   "name": "storacle-ms",
-  "version": "0.2.31",
+  "version": "0.2.32",
   "description": "Decentralized file storage for MetaSound",
   "main": "./src/index.js",
   "type": "module",
