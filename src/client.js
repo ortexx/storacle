@@ -3,8 +3,8 @@ import client from "spreadable-ms/src/client.js";
 import fse from "fs-extra";
 import utils from "./utils.js";
 import errors from "./errors.js";
+import pack from "../package.json" assert { type: "json" }
 
-const pack = JSON.parse(fse.readFileSync(new URL("../package.json", import.meta.url)));
 const Client = client();
 
 export default (Parent) => {

@@ -1,6 +1,6 @@
 {
   "name": "storacle-ms",
-  "version": "0.3.32",
+  "version": "0.3.33",
   "description": "Decentralized file storage for MetaSound",
   "main": "./src/index.js",
   "type": "module",
@@ -41,6 +41,7 @@
   "devDependencies": {
     "@babel/core": "^7.23.7",
     "@babel/eslint-parser": "^7.23.3",
+    "@babel/plugin-syntax-import-assertions": "^7.23.3",
     "@babel/plugin-transform-runtime": "^7.23.7",
     "@babel/preset-env": "^7.23.8",
     "babel-loader": "^9.1.3",
