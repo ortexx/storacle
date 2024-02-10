@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import fse from "fs-extra";
 import path from "path";
-import _ from "lodash";
+import merge from "lodash-es/merge.js";
 import node from "../src/node.js";
 import utils from "../src/utils.js";
 import tools from "./tools.js";
@@ -29,7 +29,7 @@ export default function () {
             let data;
             let defaultOptions;
             before(async () => {
-                defaultOptions = _.merge({}, node.options);
+                defaultOptions = merge({}, node.options);
                 data = await node.getStorageInfo();
             });
             after(async () => {
@@ -412,7 +412,7 @@ export default function () {
         describe('.cleanUpTempDir()', () => {
             let options;
             before(async () => {
-                options = _.merge({}, node.options);
+                options = merge({}, node.options);
                 await fse.emptyDir(node.tempPath);
             });
             after(() => {
@@ -481,7 +481,7 @@ export default function () {
         describe('.fileAvailabilityTest()', () => {
             let options;
             before(async () => {
-                options = _.merge({}, node.options);
+                options = merge({}, node.options);
             });
             after(() => {
                 node.options = options;

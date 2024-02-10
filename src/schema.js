@@ -1,10 +1,10 @@
-import _ from "lodash";
+import merge from "lodash-es/merge.js";
 import utils from "./utils.js";
 import _schema from "spreadable-ms/src/schema.js";
 
 const schema = Object.assign({}, _schema)
 schema.getStatusResponse = function () {
-    return _.merge(_schema.getStatusResponse(), {
+    return merge(_schema.getStatusResponse(), {
         props: {
             total: 'number',
             available: 'number',
@@ -22,7 +22,7 @@ schema.getStatusResponse = function () {
     });
 };
 schema.getStatusPrettyResponse = function () {
-    return _.merge(this.getStatusResponse(), _schema.getStatusPrettyResponse(), {
+    return merge(this.getStatusResponse(), _schema.getStatusPrettyResponse(), {
         props: {
             total: 'string',
             available: 'string',

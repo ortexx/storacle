@@ -1,4 +1,4 @@
-import _ from "lodash";
+import merge from "lodash-es/merge.js";
 import client from "spreadable-ms/src/client.js";
 import fse from "fs-extra";
 import utils from "./utils.js";
@@ -17,7 +17,7 @@ export default (Parent) => {
         static get utils() { return utils; }
         static get errors() { return errors; }
         constructor(options = {}) {
-            options = _.merge({
+            options = merge({
                 request: {
                     fileStoringTimeout: '2.05h',
                     fileGettingTimeout: '1h',

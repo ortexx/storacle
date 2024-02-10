@@ -2,7 +2,8 @@ import path from "path";
 import url from "url";
 import fse from "fs-extra";
 import fetch from "node-fetch";
-import _ from "lodash";
+import assign from "lodash-es/assign.js";
+import merge from "lodash-es/merge.js";
 import bytes from "bytes";
 import SplayTree from "splaytree";
 import node from "spreadable-ms/src/node.js";
@@ -33,7 +34,7 @@ export default (Parent) => {
          * @see Node
          */
         constructor(options = {}) {
-            options = _.merge({
+            options = merge({
                 request: {
                     clientStoringConcurrency: 20,
                     fileStoringNodeTimeout: '2h',
@@ -138,7 +139,7 @@ export default (Parent) => {
                     storage[key] = bytes(storage[key]);
                 }
             }
-            return _.merge(await super.getStatusInfo(pretty), storage, {
+            return merge(await super.getStatusInfo(pretty), storage, {
                 filesCount: await this.db.getData('filesCount')
             });
         }
@@ -319,7 +320,7 @@ export default (Parent) => {
          * @returns {object}
          */
         async duplicateFile(servers, file, info, options = {}) {
-            options = _.assign({
+            options = assign({
                 responseSchema: schema.getFileStoringResponse(),
                 cache: true
             }, options);
@@ -338,7 +339,7 @@ export default (Parent) => {
                 }
                 return {
                     timeout: this.options.request.fileStoringNodeTimeout,
-                    formData: _.merge({}, options.formData, {
+                    formData: merge({}, options.formData, {
                         file: address == (this.address && tempFile) || {
                             value: file,
                             options: {
@@ -374,7 +375,7 @@ export default (Parent) => {
                 timeout: options.timeout,
                 responseSchema: schema.getFileLinksMasterResponse({ networkOptimum: await this.getNetworkOptimum() })
             });
-            const filterOptions = _.merge(await this.getFileLinksFilterOptions());
+            const filterOptions = merge(await this.getFileLinksFilterOptions());
             const links = await this.filterCandidatesMatrix(results.map(r => r.links), filterOptions);
             return links.map(c => c.link);
         }
@@ -387,7 +388,7 @@ export default (Parent) => {
          * @returns {string}
          */
         async getFileLink(hash, options = {}) {
-            options = _.merge({
+            options = merge({
                 cache: true
             }, options);
             if (await this.hasFile(hash)) {
@@ -519,7 +520,7 @@ export default (Parent) => {
          * @param {object} [options]
          */
         async iterateFiles(fn, options = {}) {
-            options = _.assign({ ignoreFolders: true }, options);
+            options = assign({ ignoreFolders: true }, options);
             const iterate = async (dir, level) => {
                 if (options.maxLevel && level > options.maxLevel) {
                     return;
@@ -637,7 +638,7 @@ export default (Parent) => {
          * @param {number} [options.timeout]
          */
         async exportFiles(address, options = {}) {
-            options = _.merge({
+            options = merge({
                 strict: false
             }, options);
             let success = 0;

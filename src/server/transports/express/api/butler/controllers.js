@@ -1,5 +1,6 @@
 import schema from "../../../../../schema.js";
-import _ from "lodash";
+import pick from "lodash-es/pick.js";
+
 export const getFileStoringInfo = node => {
     return async (req, res, next) => {
         try {
@@ -9,7 +10,7 @@ export const getFileStoringInfo = node => {
                 responseSchema: schema.getFileStoringInfoSlaveResponse()
             });
             const results = await node.requestNetwork('get-file-storing-info', options);
-            const existing = results.filter(c => c.existenceInfo).map(c => _.pick(c, ['address', 'existenceInfo']));
+            const existing = results.filter(c => c.existenceInfo).map(c => pick(c, ['address', 'existenceInfo']));
             const candidates = await node.filterCandidates(results, await node.getFileStoringFilterOptions(info));
             res.send({ candidates, existing });
         }
