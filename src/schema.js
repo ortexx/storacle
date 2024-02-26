@@ -1,180 +1,181 @@
 import merge from "lodash-es/merge.js";
 import utils from "./utils.js";
-import _schema from "spreadable-ms/src/schema.js";
+import _schema from "spreadable/src/schema.js";
 
 const schema = Object.assign({}, _schema)
 schema.getStatusResponse = function () {
-    return merge(_schema.getStatusResponse(), {
-        props: {
-            total: 'number',
-            available: 'number',
-            allowed: 'number',
-            used: 'number',
-            free: 'number',
-            clean: 'number',
-            tempAllowed: 'number',
-            tempUsed: 'number',
-            tempFree: 'number',
-            fileMaxSize: 'number',
-            fileMinSize: 'number',
-            filesCount: 'number'
-        }
-    });
+  return merge(_schema.getStatusResponse(), {
+    props: {
+      total: 'number',
+      available: 'number',
+      allowed: 'number',
+      used: 'number',
+      free: 'number',
+      clean: 'number',
+      tempAllowed: 'number',
+      tempUsed: 'number',
+      tempFree: 'number',
+      fileMaxSize: 'number',
+      fileMinSize: 'number',
+      filesCount: 'number'
+    }
+  });
 };
 schema.getStatusPrettyResponse = function () {
-    return merge(this.getStatusResponse(), _schema.getStatusPrettyResponse(), {
-        props: {
-            total: 'string',
-            available: 'string',
-            allowed: 'string',
-            used: 'string',
-            free: 'string',
-            clean: 'string',
-            tempAllowed: 'string',
-            tempUsed: 'string',
-            tempFree: 'string',
-            fileMaxSize: 'string',
-            fileMinSize: 'string'
-        }
-    });
+  return merge(this.getStatusResponse(), _schema.getStatusPrettyResponse(), {
+    props: {
+      total: 'string',
+      available: 'string',
+      allowed: 'string',
+      used: 'string',
+      free: 'string',
+      clean: 'string',
+      tempAllowed: 'string',
+      tempUsed: 'string',
+      tempFree: 'string',
+      fileMaxSize: 'string',
+      fileMinSize: 'string'
+    }
+  });
 };
 schema.getFileExistenceInfo = function () {
-    return {
-        type: 'object',
-        props: {
-            hash: 'string',
-            size: 'number',
-            mime: 'string',
-            ext: 'string',
-            storage: 'object'
-        },
-        required: ['hash', 'size'],
-        expected: true,
-        canBeNull: true
-    };
+  return {
+    type: 'object',
+    props: {
+      hash: 'string',
+      size: 'number',
+      mime: 'string',
+      ext: 'string',
+      storage: 'object'
+    },
+    required: ['hash', 'size'],
+    expected: true,
+    canBeNull: true
+  };
 };
 schema.getFileLink = function () {
-    return {
-        type: 'string',
-        value: val => val == '' || utils.isValidFileLink(val)
-    };
+  return {
+    type: 'string',
+    value: val => val == '' || utils.isValidFileLink(val)
+  };
 };
 schema.getFileStoringResponse = function () {
-    return {
-        type: 'object',
-        props: {
-            address: this.getAddress(),
-            hash: 'string',
-            link: this.getFileLink()
-        },
-        strict: true
-    };
+  return {
+    type: 'object',
+    props: {
+      address: this.getAddress(),
+      hash: 'string',
+      link: this.getFileLink()
+    },
+    strict: true
+  };
 };
 schema.getFileStoringInfoMasterResponse = function () {
-    return this.getFileStoringInfoButlerResponse();
+  return this.getFileStoringInfoButlerResponse();
 };
 schema.getFileStoringInfoButlerResponse = function () {
-    const address = this.getAddress();
-    return {
-        type: 'object',
-        props: {
+  const address = this.getAddress();
+  return {
+    type: 'object',
+    props: {
+      address,
+      candidates: {
+        type: 'array',
+        uniq: 'address',
+        items: this.getFileStoringInfoSlaveResponse()
+      },
+      existing: {
+        type: 'array',
+        uniq: 'address',
+        items: {
+          type: 'object',
+          props: {
             address,
-            candidates: {
-                type: 'array',
-                uniq: 'address',
-                items: this.getFileStoringInfoSlaveResponse()
-            },
-            existing: {
-                type: 'array',
-                uniq: 'address',
-                items: {
-                    type: 'object',
-                    props: {
-                        address,
-                        existenceInfo: this.getFileExistenceInfo()
-                    },
-                    strict: true
-                }
-            }
-        },
-        strict: true
-    };
+            existenceInfo: this.getFileExistenceInfo()
+          },
+          strict: true
+        }
+      }
+    },
+    strict: true
+  };
 };
 schema.getFileStoringInfoSlaveResponse = function () {
-    return {
-        type: 'object',
-        props: {
-            address: this.getAddress(),
-            free: 'number',
-            isAvailable: 'boolean',
-            existenceInfo: this.getFileExistenceInfo()
-        },
-        strict: true
-    };
+  return {
+    type: 'object',
+    props: {
+      address: this.getAddress(),
+      free: 'number',
+      isAvailable: 'boolean',
+      existenceInfo: this.getFileExistenceInfo()
+    },
+    strict: true
+  };
 };
 schema.getFileLinksMasterResponse = function () {
-    return this.getFileLinksButlerResponse();
+  return this.getFileLinksButlerResponse();
 };
 schema.getFileLinksButlerResponse = function () {
-    return {
-        type: 'object',
-        props: {
-            address: this.getAddress(),
-            links: {
-                type: 'array',
-                items: this.getFileLinksSlaveResponse()
-            }
-        },
-        strict: true
-    };
+  return {
+    type: 'object',
+    props: {
+      address: this.getAddress(),
+      links: {
+        type: 'array',
+        items: this.getFileLinksSlaveResponse()
+      }
+    },
+    strict: true
+  };
 };
 schema.getFileLinksSlaveResponse = function () {
-    return {
-        type: 'object',
-        props: {
-            address: this.getAddress(),
-            link: this.getFileLink()
-        },
-        strict: true
-    };
+  return {
+    type: 'object',
+    props: {
+      address: this.getAddress(),
+      link: this.getFileLink()
+    },
+    strict: true
+  };
 };
 schema.getFileRemovalMasterResponse = function () {
-    return this.getFileRemovalButlerResponse();
+  return this.getFileRemovalButlerResponse();
 };
 schema.getFileRemovalButlerResponse = function () {
-    return {
-        type: 'object',
-        props: {
-            address: this.getAddress(),
-            removed: 'number'
-        },
-        strict: true
-    };
+  return {
+    type: 'object',
+    props: {
+      address: this.getAddress(),
+      removed: 'number'
+    },
+    strict: true
+  };
 };
 schema.getFileRemovalSlaveResponse = function () {
-    return {
-        type: 'object',
-        props: {
-            address: this.getAddress(),
-            removed: 'number'
-        },
-        strict: true
-    };
+  return {
+    type: 'object',
+    props: {
+      address: this.getAddress(),
+      removed: 'number'
+    },
+    strict: true
+  };
 };
 schema.getNetworkFilesCountMasterResponse = function () {
-    return this.getNetworkFilesCountButlerResponse();
+  return this.getNetworkFilesCountButlerResponse();
 };
 schema.getNetworkFilesCountButlerResponse = function () {
-    return this.getNetworkFilesCountSlaveResponse();
+  return this.getNetworkFilesCountSlaveResponse();
 };
 schema.getNetworkFilesCountSlaveResponse = function () {
-    return {
-        type: 'object',
-        props: {
-            count: 'number',
-            address: this.getAddress()
-        },
-        strict: true
-    };
+  return {
+    type: 'object',
+    props: {
+      count: 'number',
+      address: this.getAddress()
+    },
+    strict: true
+  };
 };
+
 export default schema;

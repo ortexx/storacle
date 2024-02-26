@@ -9,13 +9,13 @@ import routes from "./routes.js";
 import group from "./group.js";
 
 describe('storacle', () => {
-    before(() => fse.ensureDir(tools.tmpPath));
-    after(() => fse.remove(tools.tmpPath));
+  before(() => fse.ensureDir(tools.tmpPath));
+  after(() => fse.remove(tools.tmpPath));
 
-    describe('utils', utils.bind(this));
-    describe('node', node.bind(this));
-    describe('client', client.bind(this));
-    describe('services', services.bind(this));
-    describe('routes', routes.bind(this));
-    describe('group', group.bind(this));
+  describe('utils', utils.bind(this));
+  describe('node', node.bind(this));
+  describe('client', client.bind(this));
+  describe('services', services.bind(this));
+  describe('routes', routes.bind(this));
+  describe('group', group.bind(this));
 });

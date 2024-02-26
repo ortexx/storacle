@@ -1,25 +1,27 @@
-import loki from "spreadable-ms/src/db/transports/loki/index.js";
+import loki from "spreadable/src/db/transports/loki/index.js";
 
 const DatabaseLoki = loki();
 
 export default (Parent) => {
+
+  /**
+   * Lokijs storacle database transport
+   */
+  return class DatabaseLokiStoracle extends (Parent || DatabaseLoki) {
+
     /**
-     * Lokijs storacle database transport
+     * @see DatabaseLoki.prototype.initCollectionData
      */
-    return class DatabaseLokiStoracle extends (Parent || DatabaseLoki) {
-        /**
-         * @see DatabaseLoki.prototype.initCollectionData
-         */
-        initCollectionData() {
-            super.initCollectionData.apply(this, arguments);
-            const filesTotalSize = this.col.data.findOne({ name: 'filesTotalSize' });
-            const filesCount = this.col.data.findOne({ name: 'filesCount' });
-            if (!filesTotalSize) {
-                this.col.data.insert({ name: 'filesTotalSize', value: 0 });
-            }
-            if (!filesCount) {
-                this.col.data.insert({ name: 'filesCount', value: 0 });
-            }
-        }
-    };
+    initCollectionData() {
+      super.initCollectionData.apply(this, arguments);
+      const filesTotalSize = this.col.data.findOne({ name: 'filesTotalSize' });
+      const filesCount = this.col.data.findOne({ name: 'filesCount' });
+      if (!filesTotalSize) {
+        this.col.data.insert({ name: 'filesTotalSize', value: 0 });
+      }
+      if (!filesCount) {
+        this.col.data.insert({ name: 'filesCount', value: 0 });
+      }
+    }
+  };
 };

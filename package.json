@@ -1,17 +1,17 @@
 {
-  "name": "storacle-ms",
+  "name": "storacle",
   "version": "0.3.35",
-  "description": "Decentralized file storage for MetaSound",
+  "description": "Decentralized file storage",
   "main": "./src/index.js",
   "type": "module",
   "bin": {
     "storacle": "./bin/index.js"
   },
   "author": {
-    "name": "MetaSound",
-    "email": "info@metasound.us"
+    "name": "Alexander Balasyan",
+    "email": "mywebstreet@gmail.com"
   },
-  "homepage": "https://github.com/metasound/storacle",
+  "homepage": "https://github.com/ortexx/storacle",
   "scripts": {
     "eslint": "eslint src bin test",
     "test": "mocha ./test/index.js --timeout=30000",
@@ -40,7 +40,7 @@
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.23.7",
-    "@babel/eslint-parser": "^7.23.3",
+    "@babel/eslint-parser": "^7.23.10",
     "@babel/plugin-syntax-import-assertions": "^7.23.3",
     "@babel/plugin-transform-runtime": "^7.23.7",
     "@babel/preset-env": "^7.23.8",
@@ -66,16 +66,16 @@
     "detect-file-type": "^0.2.8",
     "express-form-data": "^2.0.23",
     "fs-extra": "^11.2.0",
-    "hasha": "^5.0.0",
+    "hasha": "5.0.0",
     "lodash-es": "^4.17.21",
     "mime": "^4.0.1",
     "node-fetch": "^2.7.0",
     "splaytree": "^3.1.2",
-    "spreadable-ms": "latest"
+    "spreadable": "^0.3.4"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/metasound/storacle"
+    "url": "https://github.com/ortexx/storacle"
   },
   "engines": {
     "node": ">=20.11.0"
