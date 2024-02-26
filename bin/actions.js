@@ -2,9 +2,8 @@ import chalk from "chalk";
 import yargs from "yargs";
 import srcUtils from "../src/utils.js";
 import utils from "./utils.js";
-import * as actions$0 from "spreadable/bin/actions";
+import actions from "spreadable/bin/actions";
 const argv = yargs.argv;
-const actions = Object.assign({}, actions$0);
 
 /**
  * Normalize the files info
