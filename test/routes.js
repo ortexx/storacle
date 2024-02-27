@@ -15,6 +15,7 @@ export default function () {
   describe('routes', () => {
     let node;
     let client;
+
     before(async function () {
       node = new Node(await tools.createNodeOptions({
         network: {
@@ -28,15 +29,18 @@ export default function () {
       }));
       await client.init();
     });
+
     after(async function () {
       await node.deinit();
       await client.deinit();
     });
+
     describe('/status', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/status`);
         assert.equal(await res.status, 401);
       });
+
       it('should return the status', async function () {
         const options = client.createDefaultRequestOptions({ method: 'get' });
         const res = await fetch(`http://${node.address}/status`, options);
@@ -45,6 +49,7 @@ export default function () {
           utils.validateSchema(schema.getStatusResponse(), json);
         });
       });
+
       it('should return the pretty status', async function () {
         const options = client.createDefaultRequestOptions({ method: 'get' });
         const res = await fetch(`http://${node.address}/status?pretty`, options);
@@ -54,16 +59,19 @@ export default function () {
         });
       });
     });
+
     describe('/file/:hash', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/file/hash`);
         assert.equal(await res.status, 401);
       });
+
       it('should return 404', async function () {
         const options = client.createDefaultRequestOptions({ method: 'get' });
         const res = await fetch(`http://${node.address}/file/wrong-hash`, options);
         assert.equal(res.status, 404);
       });
+
       it('should return the file', async function () {
         const text = 'route-file-check';
         const filePath = path.join(tools.tmpPath, '1.txt');
@@ -74,16 +82,19 @@ export default function () {
         assert.equal(await fse.readFile(filePath), text);
       });
     });
+
     describe('/client/request-file/:hash', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/client/request-file/hash`, { method: 'get' });
         assert.equal(await res.status, 401);
       });
+
       it('should return 404', async function () {
         const options = client.createDefaultRequestOptions({ method: 'get' });
         const res = await fetch(`http://${node.address}/client/request-file/wrong-hash`, options);
         assert.equal(res.status, 404);
       });
+
       it('should return the file', async function () {
         const text = 'route-request-file-check';
         const filePath = path.join(tools.tmpPath, '1.txt');
@@ -94,16 +105,19 @@ export default function () {
         assert.equal(await fse.readFile(filePath), text);
       });
     });
+
     describe('/client/store-file', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/client/store-file`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return an error', async function () {
         const options = client.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/client/store-file`, options);
         assert.equal(res.status, 422);
       });
+
       it('should save the file', async function () {
         const text = 'check-client-store-file';
         const fileOptions = { contentType: 'text/plain', filename: `${text}.txt` };
@@ -116,16 +130,19 @@ export default function () {
         assert.isTrue(await node.hasFile(json.hash));
       });
     });
+
     describe('/client/get-file-link/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/client/get-file-link`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = client.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/client/get-file-link`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the link', async function () {
         const hash = await node.storeFile(Buffer.from('hello'));
         const options = client.createDefaultRequestOptions(tools.createJsonRequestOptions({ body: { hash } }));
@@ -134,16 +151,19 @@ export default function () {
         assert.equal(json.link, await node.createFileLink(hash));
       });
     });
+
     describe('/client/get-file-links/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/client/get-file-links`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = client.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/client/get-file-links`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the link', async function () {
         const hash = await node.storeFile(Buffer.from('hello'));
         const options = client.createDefaultRequestOptions(tools.createJsonRequestOptions({ body: { hash } }));
@@ -152,16 +172,19 @@ export default function () {
         assert.equal(json.links[0], await node.createFileLink(hash));
       });
     });
+
     describe('/client/remove-file/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/client/remove-file/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = client.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/client/remove-file/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should remove the file', async function () {
         const hash = await node.storeFile(Buffer.from('hello'));
         const options = client.createDefaultRequestOptions(tools.createJsonRequestOptions({ body: { hash } }));
@@ -171,22 +194,26 @@ export default function () {
         assert.isFalse(await node.hasFile(hash), 'check the file');
       });
     });
+
     describe('/client/get-network-files-count/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/client/get-network-files-count/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should get the right count', async function () {
         const res = await fetch(`http://${node.address}/client/get-network-files-count/`, client.createDefaultRequestOptions());
         const json = tools.createServerResponse(node.address, await res.json());
         assert.equal(json.count, await node.db.getData('filesCount'));
       });
     });
+
     describe('/api/master/get-network-files-count/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/master/get-network-files-count/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return the right schema', async function () {
         const options = node.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/api/master/get-network-files-count/`, options);
@@ -196,11 +223,13 @@ export default function () {
         });
       });
     });
+
     describe('/api/butler/get-network-files-count/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/butler/get-network-files-count/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return the right schema', async function () {
         const options = node.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/api/butler/get-network-files-count/`, options);
@@ -210,11 +239,13 @@ export default function () {
         });
       });
     });
+
     describe('/api/slave/get-network-files-count/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/slave/get-network-files-count/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return the right schema', async function () {
         const options = node.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/api/slave/get-network-files-count/`, options);
@@ -224,16 +255,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/master/get-file-storing-info/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/master/get-file-storing-info/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());
         const res = await fetch(`http://${node.address}/api/master/get-file-storing-info/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 2,
@@ -250,16 +284,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/master/get-file-links/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/master/get-file-links/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());
         const res = await fetch(`http://${node.address}/api/master/get-file-links/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 2,
@@ -273,16 +310,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/master/remove-file/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/master/remove-file/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());
         const res = await fetch(`http://${node.address}/api/master/remove-file/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 2,
@@ -296,16 +336,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/butler/get-file-storing-info/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/butler/get-file-storing-info/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());
         const res = await fetch(`http://${node.address}/api/butler/get-file-storing-info/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 1,
@@ -322,16 +365,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/butler/get-file-links/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/butler/get-file-links/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());
         const res = await fetch(`http://${node.address}/api/butler/get-file-links/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 1,
@@ -345,16 +391,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/butler/remove-file/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/butler/remove-file/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions(tools.createJsonRequestOptions());
         const res = await fetch(`http://${node.address}/api/butler/remove-file/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 1,
@@ -368,16 +417,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/slave/get-file-storing-info/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/slave/get-file-storing-info/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/api/slave/get-file-storing-info/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 0,
@@ -394,16 +446,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/slave/get-file-links/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/slave/get-file-links/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/api/slave/get-file-links/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema for empty link', async function () {
         const body = {
           level: 0,
@@ -416,6 +471,7 @@ export default function () {
           utils.validateSchema(schema.getFileLinksSlaveResponse(), json);
         });
       });
+
       it('should return the right schema for the existent link', async function () {
         const hash = await node.storeFile(Buffer.from('hello'));
         const body = {
@@ -431,16 +487,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/slave/remove-file/', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/slave/remove-file/`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return a data error', async function () {
         const options = node.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/api/slave/remove-file/`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema', async function () {
         const body = {
           level: 0,
@@ -454,16 +513,19 @@ export default function () {
         });
       });
     });
+
     describe('/api/node/store-file/:hash', function () {
       it('should return an auth error', async function () {
         const res = await fetch(`http://${node.address}/api/node/store-file/hash`, { method: 'post' });
         assert.equal(await res.status, 401);
       });
+
       it('should return an error', async function () {
         const options = node.createDefaultRequestOptions();
         const res = await fetch(`http://${node.address}/api/node/store-file/hash`, options);
         assert.equal(res.status, 422);
       });
+
       it('should return the right schema for a common situation', async function () {
         const fileOptions = { contentType: 'text/plain', filename: `hello.txt` };
         const buffer = Buffer.from('hello');
@@ -478,6 +540,7 @@ export default function () {
           utils.validateSchema(schema.getFileStoringResponse(), json);
         });
       });
+      
       it('should return the right schema for a temp file', async function () {
         const name = '1.txt';
         const filePath = path.join(node.tempPath, name);

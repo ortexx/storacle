@@ -8,7 +8,6 @@ import pack from "../package.json" assert { type: "json" }
 const Client = client();
 
 export default (Parent) => {
-
   /**
    * Class to manage client requests to the network
    */

@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.3.35",
+  "version": "0.3.1",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "type": "module",
@@ -50,14 +50,13 @@
     "css-minimizer-webpack-plugin": "^5.0.1",
     "eslint": "^8.56.0",
     "eslint-webpack-plugin": "^4.0.1",
-    "husky": "^8.0.3",
+    "husky": "^4.3.8",
     "mini-css-extract-plugin": "^2.7.7",
     "mocha": "^10.2.0",
     "node-polyfill-webpack-plugin": "^3.0.0",
     "terser-webpack-plugin": "^5.3.10",
     "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4",
-    "yargs": "^17.7.2"
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "bytes": "^3.1.2",
@@ -71,13 +70,14 @@
     "mime": "^4.0.1",
     "node-fetch": "^2.7.0",
     "splaytree": "^3.1.2",
-    "spreadable": "^0.3.4"
+    "spreadable": "~0.3.4",
+    "yargs": "^17.7.2"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/ortexx/storacle"
   },
   "engines": {
-    "node": ">=20.11.0"
+    "node": ">=16.0.0"
   }
 }

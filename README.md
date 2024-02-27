@@ -5,50 +5,46 @@ Storacle is a decentralized file storage based on [the spreadable protocol](http
 There is [an article here](https://ortex.medium.com/storacle-a-decentralized-file-storage-3f0c5c57591c) with an explanation. 
 
 ```javascript
-const Node = require('storacle').Node;
+import { Node } from 'storacle';
 
-(async () => {  
-  try {
-    const node = new Node({
-      port: 4000,
-      hostname: 'localhost'
-    });
-    await node.init();
-  }
-  catch(err) {
-    console.error(err.stack);
-    process.exit(1);
-  }
-})();
+try {
+  const node = new Node({
+    port: 4000,
+    hostname: 'localhost'
+  });
+  await node.init();
+}
+catch(err) {
+  console.error(err.stack);
+  process.exit(1);
+}
 ```
 
 ```javascript
-const Client = require('storacle').Client;
+import { Client } from 'storacle';
 
-(async () => {  
-  try {
-    const client = new Client({
-      address: 'localhost:4000'
-    });
-    await client.init();
+try {
+  const client = new Client({
+    address: 'localhost:4000'
+  });
+  await client.init();
 
-    // Store our file
-    const hash = await client.storeFile('./my-file');
+  // Store our file
+  const hash = await client.storeFile('./my-file');
 
-    // Get the direct file link
-    const link = await client.getFileLink(hash);
+  // Get the direct file link
+  const link = await client.getFileLink(hash);
 
-    // Create the requested file link
-    const requestedLink = client.createRequestedFileLink(hash);
-    
-    // Remove the file
-    await client.removeFile(hash);
-  }
-  catch(err) {
-    console.error(err.stack);
-    process.exit(1);
-  }
-})();
+  // Create the requested file link
+  const requestedLink = client.createRequestedFileLink(hash);
+  
+  // Remove the file
+  await client.removeFile(hash);
+}
+catch(err) {
+  console.error(err.stack);
+  process.exit(1);
+}
 ```
 
 The example above shows the simplest usage of the library. But the server can be flexibly configured.

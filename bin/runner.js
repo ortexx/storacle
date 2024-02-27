@@ -1,1 +1,1 @@
-export { default } from "spreadable/bin/runner";
+export { default } from "spreadable/bin/runner.js";

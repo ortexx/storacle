@@ -2,7 +2,6 @@ import * as controllers from "./controllers.js";
 import midds from "../../midds.js";
 
 export default [
-
   /**
    * Store the file
    *

@@ -7,21 +7,20 @@ import merge from "lodash-es/merge.js";
 import bytes from "bytes";
 import SplayTree from "splaytree";
 import node from "spreadable/src/node.js";
-import database from "spreadable/src/cache/transports/database/index.js";
-import loki from "./db/transports/loki/index.js";
-import express from "./server/transports/express/index.js";
+import cacheDatabase from "spreadable/src/cache/transports/database/index.js";
+import databaseLoki from "./db/transports/loki/index.js";
+import serverExpress from "./server/transports/express/index.js";
 import utils from "./utils.js";
 import errors from "./errors.js";
 import schema from "./schema.js";
 import pack from "../package.json" assert { type: "json" }
 
 const Node = node();
-const CacheDatabaseStoracle = database();
-const DatabaseLokiStoracle = loki();
-const ServerExpressStoracle = express();
+const CacheDatabaseStoracle = cacheDatabase();
+const DatabaseLokiStoracle = databaseLoki();
+const ServerExpressStoracle = serverExpress();
 
 export default (Parent) => {
-
   /**
    * Class to manage the storacle node
    */
@@ -115,15 +114,19 @@ export default (Parent) => {
      */
     async prepareTask() {
       await super.prepareTask.apply(this, arguments);
+
       if (!this.task) {
         return;
       }
+
       if (this.options.task.cleanUpStorageInterval) {
         await this.task.add('cleanUpStorage', this.options.task.cleanUpStorageInterval, () => this.cleanUpStorage());
       }
+
       if (this.options.task.cleanUpTempDirInterval) {
         await this.task.add('cleanUpTempDir', this.options.task.cleanUpTempDirInterval, () => this.cleanUpTempDir());
       }
+
       if (this.options.task.calculateStorageInfoInterval) {
         await this.task.add('calculateStorageInfo', this.options.task.calculateStorageInfoInterval, () => this.calculateStorageInfo());
       }
@@ -142,11 +145,13 @@ export default (Parent) => {
      */
     async getStatusInfo(pretty = false) {
       const storage = await this.getStorageInfo();
+
       if (pretty) {
         for (let key in storage) {
           storage[key] = bytes(storage[key]);
         }
       }
+
       return merge(await super.getStatusInfo(pretty), storage, {
         filesCount: await this.db.getData('filesCount')
       });
@@ -179,43 +184,55 @@ export default (Parent) => {
       this.fileMaxSize = this.options.file.maxSize;
       this.fileMinSize = this.options.file.minSize;
       const available = info.available + used + tempDirInfo.size;
+
       if (typeof this.storageDataSize == 'string') {
         const arr = this.storageDataSize.split(' - ');
         this.storageDataSize = Math.floor(available * parseFloat(arr[0]) / 100);
         arr[1] && (this.storageDataSize -= utils.getBytes(arr[1]));
       }
+
       if (typeof this.storageTempSize == 'string') {
         const arr = this.storageTempSize.split(' - ');
         this.storageTempSize = Math.floor(available * parseFloat(this.storageTempSize) / 100);
         arr[1] && (this.storageTempSize -= utils.getBytes(arr[1]));
       }
+
       if (this.storageDataSize > available) {
         throw new Error(`"storage.dataSize" is greater than available disk space`);
       }
+
       if (this.storageTempSize > available) {
         throw new Error(`"storage.tempSize" is greater than available disk space`);
       }
+
       if (this.storageDataSize + this.storageTempSize > available) {
         throw new Error(`"storage.dataSize" + "storage.tempSize" is greater than available disk space`);
       }
+
       if (typeof this.storageAutoCleanSize == 'string') {
         this.storageAutoCleanSize = Math.floor(this.storageDataSize * parseFloat(this.storageAutoCleanSize) / 100);
       }
+
       if (this.storageAutoCleanSize > this.storageDataSize) {
         throw new Error(`"storage.autoCleanSize" is greater than "storage.dataSize"`);
       }
+
       if (typeof this.fileMaxSize == 'string') {
         this.fileMaxSize = Math.floor(available * parseFloat(this.fileMaxSize) / 100);
       }
+
       if (typeof this.fileMinSize == 'string') {
         this.fileMinSize = Math.floor(available * parseFloat(this.fileMinSize) / 100);
       }
+
       if (this.fileMaxSize > this.storageDataSize) {
         throw new Error(`"file.maxSize" is greater than "storage.dataSize"`);
       }
+
       if (this.fileMaxSize < this.fileMinSize) {
         throw new Error(`"file.maxSize" is less than "file.minSize"`);
       }
+
       if (this.calculateTempFileMinSize(this.fileMaxSize) > this.storageTempSize) {
         throw new Error(`Minimum temp file size is greater than "storage.tempSize"`);
       }
@@ -271,15 +288,20 @@ export default (Parent) => {
      */
     async storeFile(file, options = {}) {
       const destroyFileStream = () => utils.isFileReadStream(file) && file.destroy();
+
       try {
         const timer = this.createRequestTimer(options.timeout);
+
         if (typeof file == 'string') {
           file = fse.createReadStream(file);
         }
+
         const info = await utils.getFileInfo(file);
+        
         if (!info.size || !info.hash) {
           throw new errors.WorkError('This file cannot be added to the network', 'ERR_STORACLE_INVALID_FILE');
         }
+
         const masterRequestTimeout = await this.getRequestMasterTimeout();
         let results = await this.requestNetwork('get-file-storing-info', {
           body: { info },
@@ -289,15 +311,19 @@ export default (Parent) => {
         const existing = results.reduce((p, c) => p.concat(c.existing), []);
         const duplicates = await this.getFileDuplicatesCount(info);
         const limit = duplicates - existing.length;
+       
         if (limit <= 0) {
           destroyFileStream();
           return info.hash;
         }
+
         const filterOptions = Object.assign(await this.getFileStoringFilterOptions(info), { limit });
         const candidates = await this.filterCandidatesMatrix(results.map(r => r.candidates), filterOptions);
+        
         if (!candidates.length && !existing.length) {
           throw new errors.WorkError('Not found a suitable server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
         }
+
         if (candidates.length) {
           await this.db.addBehaviorCandidate('storeFile', candidates[0].address);
         }
@@ -306,15 +332,18 @@ export default (Parent) => {
           return info.hash;
         }
         const servers = candidates.map(c => c.address).sort(await this.createAddressComparisonFunction());
-        const dupOptions = Object.assign({}, options, { timeout: timer() });
+        const dupOptions = Object.assign({}, options, { timeout: timer() });        
         const result = await this.duplicateFile(servers, file, info, dupOptions);
+        
         if (!result && !existing.length) {
           throw new errors.WorkError('Not found an available server to store the file', 'ERR_STORACLE_NOT_FOUND_STORAGE');
         }
+        
         if (!result) {
           destroyFileStream();
           return info.hash;
         }
+
         destroyFileStream();
         return result.hash;
       }
@@ -342,16 +371,19 @@ export default (Parent) => {
       let tempFile;
       const streams = [];
       const isStream = utils.isFileReadStream(file);
+
       if (isStream) {
         streams.push(file);
         const name = path.basename(file.path);
         await fse.pathExists(path.join(this.tempPath, name)) && (tempFile = name);
       }
+
       options.serverOptions = address => {
         if (isStream) {
           file = fse.createReadStream(file.path);
           streams.push(file);
         }
+
         return {
           timeout: this.options.request.fileStoringNodeTimeout,
           formData: merge({}, options.formData, {
@@ -365,9 +397,10 @@ export default (Parent) => {
           })
         };
       };
+
       try {
-        const result = await this.duplicateData(options.action || `store-file/${info.hash}`, servers, options);
-        result && options.cache && await this.updateFileCache(result.hash, { link: result.link });
+        const result = await this.duplicateData(options.action || `store-file/${info.hash}`, servers, options); 
+        result && options.cache && await this.updateFileCache(result.hash, { link: result.link }); 
         streams.forEach(s => s.destroy());
         return result;
       }
@@ -408,25 +441,33 @@ export default (Parent) => {
       options = merge({
         cache: true
       }, options);
+
       if (await this.hasFile(hash)) {
         return await this.createFileLink(hash);
       }
+
       if (this.cacheFile && options.cache) {
         const cache = await this.cacheFile.get(hash);
+
         if (cache) {
           const link = cache.value.link;
+
           if (await this.checkCacheLink(link)) {
             return link;
           }
+
           await this.cacheFile.remove(hash);
         }
       }
+
       const links = await this.getFileLinks(hash, options);
+
       if (links.length) {
         const link = utils.getRandomElement(links);
         options.cache && await this.updateFileCache(hash, { link });
         return link;
       }
+
       return '';
     }
 
@@ -474,6 +515,7 @@ export default (Parent) => {
       if (!this.cacheFile || !utils.isValidFileLink(value.link) || url.parse(value.link).host == this.address) {
         return;
       }
+
       await this.cacheFile.set(title, value);
     }
 
@@ -515,12 +557,15 @@ export default (Parent) => {
       const info = {};
       let used;
       let tempUsed;
+
       if (data.used || data.available || data.free) {
         used = await this.getStorageTotalSize();
       }
+
       if (data.tempUsed || data.tempFree) {
         tempUsed = (await this.getTempDirInfo()).size;
       }
+
       data.total && (info.total = diskInfo.total);
       data.available && (info.available = diskInfo.available + used);
       data.allowed && (info.allowed = this.storageDataSize);
@@ -548,17 +593,22 @@ export default (Parent) => {
         if (options.maxLevel && level > options.maxLevel) {
           return;
         }
+
         const files = await fse.readdir(dir);
+
         for (let i = 0; i < files.length; i++) {
           try {
             const filePath = path.join(dir, files[i]);
             const stat = await fse.stat(filePath);
+
             if (stat.isDirectory()) {
               await iterate(filePath, level + 1);
+
               if (options.ignoreFolders) {
                 continue;
               }
             }
+
             await fn(filePath, stat);
           }
           catch (err) {
@@ -594,15 +644,19 @@ export default (Parent) => {
       if (!this.storageAutoCleanSize) {
         return;
       }
+
       const storageInfoData = { tempUsed: false, tempFree: false };
       const storage = await this.getStorageInfo(storageInfoData);
       const needSize = this.storageAutoCleanSize - storage.free;
+      
       if (needSize <= 0) {
         return;
       }
+
       this.logger.info(`It is necessary to clean ${needSize} byte(s)`);
       const tree = await this.getStorageCleaningUpTree();
       let node = tree.minNode();
+      
       while (node) {
         const obj = node.data;
         try {
@@ -616,6 +670,7 @@ export default (Parent) => {
         }
         node = tree.next(node);
       }
+
       if ((await this.getStorageInfo(storageInfoData)).free < this.storageAutoCleanSize) {
         this.logger.warn('Unable to free up space on the disk completely');
       }
@@ -628,13 +683,16 @@ export default (Parent) => {
      */
     async cleanUpTempDir() {
       const files = await fse.readdir(this.tempPath);
+      
       for (let i = 0; i < files.length; i++) {
         try {
           const filePath = path.join(this.tempPath, files[i]);
           const stat = await fse.stat(filePath);
+          
           if (Date.now() - stat.mtimeMs <= this.options.storage.tempLifetime) {
             continue;
           }
+
           await fse.remove(filePath);
         }
         catch (err) {
@@ -679,6 +737,7 @@ export default (Parent) => {
       await this.iterateFiles(async (filePath) => {
         const info = await utils.getFileInfo(filePath);
         let file;
+        
         try {
           file = fse.createReadStream(filePath);
           await this.duplicateFile([address], file, info, { timeout: timer() });
@@ -696,6 +755,7 @@ export default (Parent) => {
           this.logger.info(`File "${info.hash}" has been failed`);
         }
       });
+
       if (!success && !fail) {
         this.logger.info(`There haven't been files to export`);
       }
@@ -745,6 +805,7 @@ export default (Parent) => {
         const destPath = this.getFilePath(hash);
         const dir = path.dirname(destPath);
         const exists = await fse.pathExists(destPath);
+       
         try {
           await fse.ensureDir(dir);
           await fse[options.copy ? 'copy' : 'move'](sourcePath, destPath, { overwrite: true });
@@ -771,6 +832,7 @@ export default (Parent) => {
         const filePath = this.getFilePath(hash);
         const stat = await fse.stat(filePath);
         let dir = path.dirname(filePath);
+
         try {
           await fse.remove(filePath);
           await this.db.setData('filesTotalSize', row => row.value - stat.size);
@@ -779,6 +841,7 @@ export default (Parent) => {
         }
         catch (err) {
           await this.normalizeDir(dir);
+
           if (err.code != 'ENOENT') {
             throw err;
           }
@@ -793,6 +856,7 @@ export default (Parent) => {
      */
     async normalizeDir(dir) {
       const filesPath = path.normalize(this.filesPath);
+
       while (dir.length > filesPath.length) {
         try {
           const files = await fse.readdir(dir);
@@ -803,6 +867,7 @@ export default (Parent) => {
           if (['ENOENT', 'EINVAL'].includes(err.code)) {
             return;
           }
+
           throw err;
         }
       }
@@ -835,12 +900,14 @@ export default (Parent) => {
         const handler = async () => {
           let err;
           let res;
+
           try {
             res = await fn();
           }
           catch (e) {
             err = e;
           }
+
           err ? reject(err) : resolve(res);
           queue.shift();
           queue.length ? queue[0]() : delete this.__blockQueue[hash];
@@ -876,6 +943,7 @@ export default (Parent) => {
       let size = 0;
       let count = 0;
       const files = await fse.readdir(this.tempPath);
+
       for (let i = 0; i < files.length; i++) {
         try {
           const filePath = path.join(this.tempPath, files[i]);
@@ -888,6 +956,7 @@ export default (Parent) => {
           }
         }
       }
+
       return { size, count };
     }
 
@@ -916,6 +985,7 @@ export default (Parent) => {
         if (err instanceof errors.WorkError) {
           return false;
         }
+
         throw err;
       }
     }
@@ -937,30 +1007,39 @@ export default (Parent) => {
       const mimeBlack = this.options.file.mimeBlacklist || [];
       const extWhite = this.options.file.extWhitelist || [];
       const extBlack = this.options.file.extBlacklist || [];
+
       if (!info.size || !info.hash) {
         throw new errors.WorkError('Wrong file', 'ERR_STORACLE_WRONG_FILE');
       }
+
       if (info.size > storage.free) {
         throw new errors.WorkError('Not enough space to store', 'ERR_STORACLE_NOT_ENOUGH_SPACE');
       }
+
       if (this.calculateTempFileMinSize(info.size) > storage.tempFree) {
         throw new errors.WorkError('Not enough space in the temp folder', 'ERR_STORACLE_NOT_ENOUGH_SPACE_TEMP');
       }
+
       if (info.size > this.fileMaxSize) {
         throw new errors.WorkError('File is too big', 'ERR_STORACLE_FILE_MAX_SIZE');
       }
+
       if (info.size < this.fileMinSize) {
         throw new errors.WorkError('File is too small', 'ERR_STORACLE_FILE_MIN_SIZE');
       }
+
       if (mimeWhite.length && (!info.mime || mimeWhite.indexOf(info.mime) == -1)) {
         throw new errors.WorkError('File mime type is denied', 'ERR_STORACLE_FILE_MIME_TYPE');
       }
+
       if (mimeBlack.length && (mimeBlack.indexOf(info.mime) != -1)) {
         throw new errors.WorkError('File mime type is denied', 'ERR_STORACLE_FILE_MIME_TYPE');
       }
+
       if (extWhite.length && (!info.ext || extWhite.indexOf(info.ext) == -1)) {
         throw new errors.WorkError('File extension is denied', 'ERR_STORACLE_FILE_EXTENSION');
       }
+
       if (extBlack.length && (extBlack.indexOf(info.ext) != -1)) {
         throw new errors.WorkError('File extension is denied', 'ERR_STORACLE_FILE_EXTENSION');
       }
@@ -1043,9 +1122,11 @@ export default (Parent) => {
      */
     getFilePath(hash) {
       const subs = [];
+      
       for (let i = 0, o = 0; i < this.__dirNestingSize; i++, o += this.__dirNameLength) {
-        subs.push(hash.substr(o, this.__dirNameLength));
+        subs.push(hash.slice(o, o + this.__dirNameLength));
       }
+
       return path.join(this.filesPath, ...subs, hash);
     }
 

@@ -20,12 +20,13 @@ const utils = Object.assign({}, _utils);
  */
 utils.fetchFileToBuffer = async function (link, options = {}) {
   options = Object.assign({}, options, { method: 'GET' });
+
   try {
     let result = await fetch(link, options);
     return result.buffer();
   }
   catch (err) {
-    throw utils.isRequestTimeoutError(err) ? utils.createRequestTimeoutError() : err;
+    throw utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err;
   }
 };
 
@@ -45,22 +46,25 @@ utils.fetchFileToBlob = async function (link, options = {}) {
   });
   const timer = this.getRequestTimer(options.timeout);
   let timeIsOver = false;
+
   try {
     let result = await fetch(link, options);
     let timeoutObj;
     const timeout = timer();
+
     if (timeout) {
       timeoutObj = setTimeout(() => {
         timeIsOver = true;
         controller.abort();
       }, timeout);
     }
+
     const blob = await result.blob();
     timeoutObj && clearTimeout(timeoutObj);
     return blob;
   }
   catch (err) {
-    throw utils.isRequestTimeoutError(err) || timeIsOver ? utils.createRequestTimeoutError() : err;
+    throw utils.isRequestTimeoutError(err) || timeIsOver? utils.createRequestTimeoutError(): err;
   }
 };
 
@@ -76,12 +80,14 @@ utils.fetchFileToPath = async function (filePath, link, options = {}) {
   options = Object.assign({}, options, { method: 'GET' });
   const timer = this.getRequestTimer(options.timeout);
   let result;
+
   try {
     result = await fetch(link, options);
   }
   catch (err) {
-    throw utils.isRequestTimeoutError(err) ? utils.createRequestTimeoutError() : err;
+    throw utils.isRequestTimeoutError(err)? utils.createRequestTimeoutError(): err;
   }
+
   return await new Promise((resolve, reject) => {
     const stream = fse.createWriteStream(filePath);
     const timeout = timer();
@@ -98,7 +104,7 @@ utils.fetchFileToPath = async function (filePath, link, options = {}) {
       .on('error', reject)
       .on('finish', () => {
         clearTimeout(timeoutObj);
-        timeIsOver ? reject(utils.createRequestTimeoutError()) : resolve();
+        timeIsOver? reject(utils.createRequestTimeoutError()): resolve();
       });
   });
 };
@@ -122,7 +128,11 @@ utils.isFileReadStream = function (obj) {
  */
 utils.getDiskInfo = async function (dir) {
   const stats = await fse.promises.statfs(dir);
-  return { available: stats.bsize * stats.bavail, free: stats.bsize * stats.bfree, total: stats.bsize * stats.blocks };
+  return {
+    available: stats.bsize * stats.bavail, 
+    free: stats.bsize * stats.bfree, 
+    total: stats.bsize * stats.blocks 
+  };
 };
 
 /**
@@ -141,6 +151,7 @@ utils.getFileInfo = async function (file, data = {}) {
     hash: true
   }, data);
   let info = {};
+
   if (typeof Blob == 'function' && file instanceof Blob) {
     data.size && (info.size = file.size);
     data.mime && (info.mime = file.type);
@@ -163,6 +174,7 @@ utils.getFileInfo = async function (file, data = {}) {
   else {
     throw new errors.WorkError('Wrong file format', 'ERR_STORACLE_WRONG_FILE');
   }
+
   return info;
 };
 
@@ -183,6 +195,7 @@ utils.getFileHash = async function (file) {
   else if (typeof Buffer == 'function' && Buffer.isBuffer(file)) {
     return await hasha(file, { algorithm: 'md5' });
   }
+
   throw new errors.WorkError('Wrong file format', 'ERR_STORACLE_WRONG_FILE');
 };
 
@@ -196,7 +209,7 @@ utils.getFileHash = async function (file) {
 utils.getFileMimeType = async function (content) {
   return await new Promise((resolve, reject) => {
     this.isFileReadStream(content) && (content = content.path);
-    detectMime[Buffer.isBuffer(content) ? 'fromBuffer' : 'fromFile'](content, (err, result) => {
+    detectMime[Buffer.isBuffer(content)? 'fromBuffer': 'fromFile'](content, (err, result) => {
       if (err) {
         return reject(err);
       }
@@ -238,19 +251,25 @@ utils.isValidFileLink = function (link, options = {}) {
   if (typeof link != 'string') {
     return false;
   }
+
   const info = urlib.parse(link);
+  
   if (!info.hostname || !this.isValidHostname(info.hostname)) {
     return false;
   }
+
   if (!info.port || !this.isValidPort(info.port)) {
     return false;
   }
+
   if (!info.protocol.match(/^https?:?$/)) {
     return false;
   }
+
   if (!info.pathname || !info.pathname.match(new RegExp(`\\/${options.action || 'file'}\\/[a-z0-9_-]+(\\.[\\w\\d]+)*$`, 'i'))) {
     return false;
   }
+
   return true;
 };
 

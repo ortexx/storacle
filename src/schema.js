@@ -2,7 +2,8 @@ import merge from "lodash-es/merge.js";
 import utils from "./utils.js";
 import _schema from "spreadable/src/schema.js";
 
-const schema = Object.assign({}, _schema)
+const schema = Object.assign({}, _schema);
+
 schema.getStatusResponse = function () {
   return merge(_schema.getStatusResponse(), {
     props: {
@@ -21,6 +22,7 @@ schema.getStatusResponse = function () {
     }
   });
 };
+
 schema.getStatusPrettyResponse = function () {
   return merge(this.getStatusResponse(), _schema.getStatusPrettyResponse(), {
     props: {
@@ -38,6 +40,7 @@ schema.getStatusPrettyResponse = function () {
     }
   });
 };
+
 schema.getFileExistenceInfo = function () {
   return {
     type: 'object',
@@ -53,12 +56,14 @@ schema.getFileExistenceInfo = function () {
     canBeNull: true
   };
 };
+
 schema.getFileLink = function () {
   return {
     type: 'string',
     value: val => val == '' || utils.isValidFileLink(val)
   };
 };
+
 schema.getFileStoringResponse = function () {
   return {
     type: 'object',
@@ -70,9 +75,11 @@ schema.getFileStoringResponse = function () {
     strict: true
   };
 };
+
 schema.getFileStoringInfoMasterResponse = function () {
   return this.getFileStoringInfoButlerResponse();
 };
+
 schema.getFileStoringInfoButlerResponse = function () {
   const address = this.getAddress();
   return {
@@ -100,6 +107,7 @@ schema.getFileStoringInfoButlerResponse = function () {
     strict: true
   };
 };
+
 schema.getFileStoringInfoSlaveResponse = function () {
   return {
     type: 'object',
@@ -112,9 +120,11 @@ schema.getFileStoringInfoSlaveResponse = function () {
     strict: true
   };
 };
+
 schema.getFileLinksMasterResponse = function () {
   return this.getFileLinksButlerResponse();
 };
+
 schema.getFileLinksButlerResponse = function () {
   return {
     type: 'object',
@@ -128,6 +138,7 @@ schema.getFileLinksButlerResponse = function () {
     strict: true
   };
 };
+
 schema.getFileLinksSlaveResponse = function () {
   return {
     type: 'object',
@@ -138,9 +149,11 @@ schema.getFileLinksSlaveResponse = function () {
     strict: true
   };
 };
+
 schema.getFileRemovalMasterResponse = function () {
   return this.getFileRemovalButlerResponse();
 };
+
 schema.getFileRemovalButlerResponse = function () {
   return {
     type: 'object',
@@ -151,6 +164,7 @@ schema.getFileRemovalButlerResponse = function () {
     strict: true
   };
 };
+
 schema.getFileRemovalSlaveResponse = function () {
   return {
     type: 'object',
@@ -161,12 +175,15 @@ schema.getFileRemovalSlaveResponse = function () {
     strict: true
   };
 };
+
 schema.getNetworkFilesCountMasterResponse = function () {
   return this.getNetworkFilesCountButlerResponse();
 };
+
 schema.getNetworkFilesCountButlerResponse = function () {
   return this.getNetworkFilesCountSlaveResponse();
 };
+
 schema.getNetworkFilesCountSlaveResponse = function () {
   return {
     type: 'object',

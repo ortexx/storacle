@@ -4,16 +4,20 @@ import fse from "fs-extra";
 export const storeFile = node => {
   return async (req, res, next) => {
     let file;
+
     try {
       file = req.body.file;
       const duplicates = req.body.duplicates || [];
       const info = await utils.getFileInfo(file);
       await node.fileAvailabilityTest(info);
+    
       if (!await node.hasFile(info.hash)) {
         await node.addFileToStorage(file, info.hash);
       }
+      
       file.destroy();
       const link = await node.createFileLink(info.hash);
+
       if (duplicates.length) {
         file = fse.createReadStream(node.getFilePath(info.hash));
         node.duplicateFile(duplicates, file, info)
@@ -25,6 +29,7 @@ export const storeFile = node => {
             node.logger.error(err.stack);
           });
       }
+      
       res.send({ hash: info.hash, link });
     }
     catch (err) {

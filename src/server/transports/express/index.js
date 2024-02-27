@@ -11,7 +11,6 @@ const ServerExpress = express();
 
 export default (Parent) => {
   return class ServerExpressStoracle extends (Parent || ServerExpress) {
-
     /**
      * @see ServerExpress.prototype.getMainRoutes
      */

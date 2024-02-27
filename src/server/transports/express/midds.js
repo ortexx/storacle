@@ -12,9 +12,11 @@ midds.file = node => {
   return async (req, res, next) => {
     try {
       const hash = req.params.hash.split('.')[0];
+
       if (!await node.hasFile(hash)) {
         throw new errors.NotFoundError('File not found');
       }
+
       if (req.headers['storacle-cache-check']) {
         return res.send('');
       }
@@ -39,13 +41,16 @@ midds.file = node => {
 midds.prepareFileToStore = node => {
   return async (req, res, next) => {
     let file;
+
     try {
       file = req.body.file;
-      const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');
+      const invalidFileErr = new errors.WorkError('"file" field is invalid', 'ERR_STORACLE_INVALID_FILE_FIELD');      
+      
       if (file && !utils.isFileReadStream(file)) {
         if (!utils.isIpEqual(req.clientIp, node.ip)) {
           throw invalidFileErr;
         }
+
         try {
           file = fse.createReadStream(path.join(node.tempPath, file));
         }
@@ -53,9 +58,11 @@ midds.prepareFileToStore = node => {
           throw invalidFileErr;
         }
       }
+
       if (!file || !utils.isFileReadStream(file)) {
         throw invalidFileErr;
       }
+
       req.body.file = file;
       next();
     }
@@ -76,15 +83,19 @@ midds.filesFormData = node => {
         let info = await node.getTempDirInfo();
         let maxSize = node.storageTempSize - info.size;
         let length = +req.headers['content-length'];
+        
         if (length > node.fileMaxSize) {
           throw new errors.WorkError('The file is too big', 'ERR_STORACLE_FILE_BIG');
         }
+
         if (length < node.fileMinSize) {
           throw new errors.WorkError('The file is too small', 'ERR_STORACLE_FILE_SMALL');
         }
+
         if (node.calculateTempFileMinSize(length) > maxSize) {
           throw new errors.WorkError('Not enough place in the temp folder', 'ERR_STORACLE_REQUEST_TEMP_NOT_ENOUGH');
         }
+        
         formData.parse({
           autoClean: true,
           maxFilesSize: node.fileMaxSize,

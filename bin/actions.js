@@ -2,8 +2,10 @@ import chalk from "chalk";
 import yargs from "yargs";
 import srcUtils from "../src/utils.js";
 import utils from "./utils.js";
-import actions from "spreadable/bin/actions";
-const argv = yargs.argv;
+import * as _actions from "spreadable/bin/actions.js";
+
+const argv = yargs(process.argv).argv;
+const actions = Object.assign({}, _actions);
 
 /**
  * Normalize the files info
@@ -49,9 +51,11 @@ actions.storeFile = async (node) => {
 actions.getFileLink = async (node) => {
   const hash = argv.hash || argv.h;
   const link = await node.getFileLink(hash);
+
   if (!link) {
     throw new Error(`There is no file with the hash ${hash}`);
   }
+
   //eslint-disable-next-line no-console
   console.log(chalk.cyan(`The file link is "${link}"`));
 };
@@ -63,9 +67,11 @@ actions.getFileToPath = async (node) => {
   const hash = argv.hash || argv.h;
   const filePath = utils.getAbsolutePath(argv.filePath || argv.f);
   const link = await node.getFileLink(hash);
+
   if (!link) {
     throw new Error(`There is no file with the hash ${hash}`);
   }
+
   await srcUtils.fetchFileToPath(filePath, link, node.createDefaultRequestOptions());
   //eslint-disable-next-line no-console
   console.log(chalk.cyan(`The file "${hash}" has been saved to "${filePath}"`));

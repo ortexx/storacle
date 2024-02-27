@@ -3,6 +3,6 @@
     "mocha": true 
   },
   "rules": {
-    "no-empty": [2, { "allowEmptyCatch": true } ]
+    "no-empty": [2, { "allowEmptyCatch": true }]
   }
 }
