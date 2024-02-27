@@ -2,7 +2,7 @@ import chalk from "chalk";
 import yargs from "yargs";
 import srcUtils from "../src/utils.js";
 import utils from "./utils.js";
-import * as _actions from "spreadable/bin/actions.js";
+import _actions from "spreadable/bin/actions.js";
 
 const argv = yargs(process.argv).argv;
 const actions = Object.assign({}, _actions);

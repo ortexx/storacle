@@ -1,6 +1,6 @@
 {
   "name": "storacle",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Decentralized file storage",
   "main": "./src/index.js",
   "type": "module",
@@ -70,7 +70,7 @@
     "mime": "^4.0.1",
     "node-fetch": "^2.7.0",
     "splaytree": "^3.1.2",
-    "spreadable": "~0.3.5",
+    "spreadable": "~0.3.6",
     "yargs": "^17.7.2"
   },
   "repository": {
